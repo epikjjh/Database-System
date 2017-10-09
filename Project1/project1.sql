@@ -100,18 +100,24 @@ from Gym as G, Trainer as T, CatchedPokemon as C, Pokemon as P
 where G.leader_id = T.id and G.city = 'Sangnok City' and C.owner_id = T.id and C.pid = P.id
 order by C.level asc;
 
---Number 21--check
+--Number 21
 select P.name, count(pid) as '#Catch'
 from Pokemon as P left join CatchedPokemon as C on P.id = C.pid
 group by P.name
 order by count(pid) desc;
 
---Number 22--Notdone
-select
-from Evolution as E, Pokemon as P
-where E.before_id = P.id
+--Number 22
+select P.name
+from Pokemon as P left join Evolution as E on P.id = E.before_id
+where P.id in (
+    select E.after_id
+    from Pokemon as P left join Evolution as E on P.id = E.before_id
+    where E.before_id in (
+        select E.after_id
+        from Pokemon as P left join Evolution as E on P.id = E.before_id
+        where P.name = 'Charmander' and P.id = E.before_id));
 
---Number 23--check
+--Number 23
 select distinct P.name
 from CatchedPokemon as C left join Pokemon as P on C.pid = P.id
 where C.pid <= 30
@@ -124,10 +130,11 @@ where T.id = C.owner_id and C.pid = P.id
 group by T.name
 having count(distinct P.type) = 1;
 
---Number 25--Notdone
-select T.name, P.name, P.type
+--Number 25
+select T.name, P.type, count(*) as '#number'
 from Trainer as T, CatchedPokemon as C, Pokemon as P
 where T.id = C.owner_id and C.pid = P.id
+group by T.name, P.type;
 
 --Number 26
 select T.name as 'Trainer name', P.name as 'Pokemon name', count(P.name) as '#Catch'
@@ -136,16 +143,21 @@ where T.id = C.owner_id and C.pid = P.id
 group by T.name
 having count(distinct P.name) = 1;
 
---Number 27--Notdone
-select T.name as 'Leader name', C.name as 'City name'
-from Trainer as T, Gym as G, City as C
-where G.leader_id = T.id and 
+--Number 27
+select T.name as 'Leader name', City.name as 'City name'
+from Trainer as T, Gym as G, City
+where G.leader_id = T.id and G.city = City.name and City.name = T.hometown and T.name not in (
+    select T.name 
+    from Trainer as T, Gym as G, CatchedPokemon as C, Pokemon as P
+    where G.leader_id = T.id and T.id = C.owner_id and C.pid = P.id
+    group by T.name
+    having count(distinct P.type) = 1);
 
---Number 28--check
+--Number 28
 select T.name, sum(if(C.level >= 50, C.level, NULL))
 from Gym as G, Trainer as T, CatchedPokemon as C
 where G.leader_id = T.id and T.id = C.owner_id
-group by T.name
+group by T.name;
 
 --Number 29--Notdone
 select P.name
@@ -154,5 +166,5 @@ where T.id = C.owoner_id and C.pid = P.id and (T.hometown = 'Blue city' or T.hom
 
 --Number 30--Notdone
 select P.name
-from Pokemon as P, Evolution as E
-where P.id = E.after_id;
+from Pokemon as P left join Evolution as E on P.id = E.before_id
+where E.before_id is NULL and E.after_id is NULL;
