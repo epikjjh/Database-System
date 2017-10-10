@@ -1,3 +1,5 @@
+use Pokemon
+
 --Number 1
 select name
 from Trainer
@@ -159,12 +161,19 @@ from Gym as G, Trainer as T, CatchedPokemon as C
 where G.leader_id = T.id and T.id = C.owner_id
 group by T.name;
 
---Number 29--Notdone
-select P.name
-from Trainer as T, CatchedPokemon as C, Pokemon as P
-where T.id = C.owoner_id and C.pid = P.id and (T.hometown = 'Blue city' or T.hometown = 'Sangnok City') and 
+--Number 29
+select distinct P.name
+from CatchedPokemon as C left join Pokemon as P on C.pid = P.id
+where (C.pid in (
+        select C.pid
+        from CatchedPokemon as C left join Trainer as T on T.id = C.owner_id
+        where T.hometown = 'Blue city')
+   and C.pid in (
+        select C.pid
+        from CatchedPokemon as C left join Trainer as T on T.id = C.owner_id
+        where T.hometown = 'Sangnok City'));
 
---Number 30--Notdone
+--Number 30
 select P.name
 from Pokemon as P left join Evolution as E on P.id = E.before_id
 where E.before_id is NULL and E.after_id is NULL;
