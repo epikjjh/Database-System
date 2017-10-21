@@ -82,6 +82,10 @@ node * queue = NULL;
  */
 bool verbose_output = false;
 
+/* This file pointer is for open_db function.
+ * It opens existing data file or create on if not existed. 
+ */
+FILE *fp 
 
 // FUNCTION DEFINITIONS.
 
@@ -1232,3 +1236,40 @@ node * destroy_tree(node * root) {
     return NULL;
 }
 
+/*
+  Open existing data file using pathname or create one if not existed.
+  If success, return 0. Otherwise, return non-zero value.
+*/
+int open_db(char *pathname){
+    fp = fopen(pathmane, "a+");
+    if(fp == NULL){
+        fprintf(stderr, "Error : file path\n");
+        exit(EXIT_FAILURE); 
+    }
+    return 0;
+}
+
+/*
+  Insert input key/value(record) to data file at the right place.
+  If success, return 0. Otherwise, return non-zero value.
+*/
+int insert(int64_t key, char *value){
+
+}
+
+
+/*
+  Find the record containing input key.
+  If found matching key, return matched value string. Otherwise, return NULL.
+*/
+char *find(int64_t key){
+
+}
+
+/*
+  Find the matching record and delete it if found.
+  If success, return 0. Otherwise, return non-zero value.
+*/
+int delete(int64_t key){
+
+}
