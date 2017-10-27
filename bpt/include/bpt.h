@@ -42,8 +42,18 @@
  * of the value field.
  */
 typedef struct record {
-    int value;
+    char value[120];
 } record;
+
+/*
+ * Free list
+ *
+ *
+ */
+typedef struct free_list {
+    int64_t address;
+    free_list *next;
+} free_list;
 
 /* Type representing a node in the B+ tree.
  * This type is general enough to serve for both
