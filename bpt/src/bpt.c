@@ -88,6 +88,12 @@ bool verbose_output = false;
 FILE *fp; 
 
 /*
+ * In case of existing file.
+ *
+ */
+int64_t default_offset;
+
+/*
  * Linked list
  *
  */
@@ -1269,6 +1275,10 @@ int open_db(char *pathname){
         fprintf(stderr, "Error : file path\n");
         exit(EXIT_FAILURE); 
     }
+    // Calculating default offset.
+    // ftello function uses off_t type.
+    default_offset = ftello(fp);
+
     // Initialize free list.
     init_free_list();
 

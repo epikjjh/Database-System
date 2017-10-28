@@ -6,6 +6,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+// For usage of large file.
+#define _LARGEFILE_SOURCE
+#define _FILE_OFEESET_BITS 64
 #ifdef WINDOWS
 #define bool char
 #define false 0
