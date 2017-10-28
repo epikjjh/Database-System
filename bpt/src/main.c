@@ -36,7 +36,7 @@ int main( int argc, char ** argv ) {
         }
         while (!feof(fp)) {
             fscanf(fp, "%d\n", &input);
-            root = insert(root, input, input);
+            root = insert_tree(root, input, input);
         }
         fclose(fp);
         print_tree(root);
@@ -47,12 +47,12 @@ int main( int argc, char ** argv ) {
         switch (instruction) {
         case 'd':
             scanf("%d", &input);
-            root = delete(root, input);
+            root = delete_tree(root, input);
             print_tree(root);
             break;
         case 'i':
             scanf("%d", &input);
-            root = insert(root, input, input);
+            root = insert_tree(root, input, input);
             print_tree(root);
             break;
         case 'f':

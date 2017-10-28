@@ -51,8 +51,9 @@ typedef struct record {
  *
  */
 typedef struct free_list {
-    int64_t address;
-    free_list *next;
+    int64_t offset;
+    bool is_free;
+    struct free_list *next;
 } free_list;
 
 /* Type representing a node in the B+ tree.
@@ -141,7 +142,7 @@ void find_and_print_range(node * root, int range1, int range2, bool verbose);
 int find_range( node * root, int key_start, int key_end, bool verbose,
         int returned_keys[], void * returned_pointers[]); 
 node * find_leaf( node * root, int key, bool verbose );
-record * find( node * root, int key, bool verbose );
+record * find_tree( node * root, int key, bool verbose );
 int cut( int length );
 
 // Insertion.
@@ -161,7 +162,7 @@ node * insert_into_node_after_splitting(node * root, node * parent,
 node * insert_into_parent(node * root, node * left, int key, node * right);
 node * insert_into_new_root(node * left, int key, node * right);
 node * start_new_tree(int key, record * pointer);
-node * insert( node * root, int key, int value );
+node * insert_tree( node * root, int key, int value );
 
 // Deletion.
 
@@ -173,7 +174,7 @@ node * redistribute_nodes(node * root, node * n, node * neighbor,
                           int neighbor_index,
         int k_prime_index, int k_prime);
 node * delete_entry( node * root, node * n, int key, void * pointer );
-node * delete( node * root, int key );
+node * delete_tree( node * root, int key );
 
 void destroy_tree_nodes(node * root);
 node * destroy_tree(node * root);

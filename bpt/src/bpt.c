@@ -85,7 +85,13 @@ bool verbose_output = false;
 /* This file pointer is for open_db function.
  * It opens existing data file or create on if not existed. 
  */
-FILE *fp 
+FILE *fp; 
+
+/*
+ * Linked list
+ *
+ */
+free_list *head = NULL;
 
 // FUNCTION DEFINITIONS.
 
@@ -333,11 +339,11 @@ void print_tree( node * root ) {
  * appropriate message to stdout.
  */
 void find_and_print(node * root, int key, bool verbose) {
-    record * r = find(root, key, verbose);
+    record * r = find_tree(root, key, verbose);
     if (r == NULL)
         printf("Record not found under key %d.\n", key);
     else 
-        printf("Record at %lx -- key %d, value %d.\n",
+        printf("Record at %lx -- key %d, value %s.\n",
                 (unsigned long)r, key, r->value);
 }
 
@@ -357,7 +363,7 @@ void find_and_print_range( node * root, int key_start, int key_end,
         printf("None found.\n");
     else {
         for (i = 0; i < num_found; i++)
-            printf("Key: %d   Location: %lx  Value: %d\n",
+            printf("Key: %d   Location: %lx  Value: %s\n",
                     returned_keys[i],
                     (unsigned long)returned_pointers[i],
                     ((record *)
@@ -434,7 +440,7 @@ node * find_leaf( node * root, int key, bool verbose ) {
 /* Finds and returns the record to which
  * a key refers.
  */
-record * find( node * root, int key, bool verbose ) {
+record * find_tree( node * root, int key, bool verbose ) {
     int i = 0;
     node * c = find_leaf( root, key, verbose );
     if (c == NULL) return NULL;
@@ -469,7 +475,7 @@ record * make_record(int value) {
         exit(EXIT_FAILURE);
     }
     else {
-        new_record->value = value;
+        strcpy(new_record->value,value);
     }
     return new_record;
 }
@@ -804,7 +810,7 @@ node * start_new_tree(int key, record * pointer) {
  * however necessary to maintain the B+ tree
  * properties.
  */
-node * insert( node * root, int key, int value ) {
+node * insert_tree( node * root, int key, int value ) {
 
     record * pointer;
     node * leaf;
@@ -813,7 +819,7 @@ node * insert( node * root, int key, int value ) {
      * duplicates.
      */
 
-    if (find(root, key, false) != NULL)
+    if (find_tree(root, key, false) != NULL)
         return root;
 
     /* Create a new record for the
@@ -1202,12 +1208,12 @@ node * delete_entry( node * root, node * n, int key, void * pointer ) {
 
 /* Master deletion function.
  */
-node * delete(node * root, int key) {
+node * delete_tree(node * root, int key) {
 
     node * key_leaf;
     record * key_record;
 
-    key_record = find(root, key, false);
+    key_record = find_tree(root, key, false);
     key_leaf = find_leaf(root, key, false);
     if (key_record != NULL && key_leaf != NULL) {
         root = delete_entry(root, key_leaf, key, key_record);
@@ -1235,17 +1241,42 @@ node * destroy_tree(node * root) {
     destroy_tree_nodes(root);
     return NULL;
 }
+//////////////////////////////////////////////////////////
+
+void init_free_list(){
+    head = (free_list *)malloc(sizeof(free_list));
+    free_list *new = (free_list *)malloc(sizeof(free_list));
+    
+    head->offset = 4096;
+    head->is_free = true;
+    head->next = new;
+    new->offset = 0;
+    new->is_free = false;
+    new->next = NULL;
+}
+
+void insert_free_list(){
+
+}
 
 /*
  * Open existing data file using pathname or create one if not existed.
  * If success, return 0. Otherwise, return non-zero value.
  */
 int open_db(char *pathname){
-    fp = fopen(pathmane, "a+");
+    fp = fopen(pathname, "a+");
     if(fp == NULL){
         fprintf(stderr, "Error : file path\n");
         exit(EXIT_FAILURE); 
     }
+    // Initialize free list.
+    init_free_list();
+
+    // Initialize header page.
+
+
+    // Manage free list.
+
     return 0;
 }
 
@@ -1274,8 +1305,14 @@ int delete(int64_t key){
 
 }
 /*
- * Managing free page
+ * Search free page
  */
 void scan(){
-    
+    free_list *pointer;
+
+    for(pointer = head; pointer->offset != 0 && pointer->next != NULL; pointer = pointer->next){
+        if(pointer->is_free == true)
+            break;
+    }
 }
+
