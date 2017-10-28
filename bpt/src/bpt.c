@@ -86,6 +86,7 @@ bool verbose_output = false;
  * It opens existing data file or create on if not existed. 
  */
 FILE *fp; 
+int fd;
 
 /*
  * In case of existing file.
@@ -1248,11 +1249,12 @@ node * destroy_tree(node * root) {
     return NULL;
 }
 //////////////////////////////////////////////////////////
-
+//List manager
 void init_free_list(){
     head = (free_list *)malloc(sizeof(free_list));
     free_list *new = (free_list *)malloc(sizeof(free_list));
     
+    // Offset 0 - 4095 is for header page.
     head->offset = 4096;
     head->is_free = true;
     head->next = new;
@@ -1260,11 +1262,121 @@ void init_free_list(){
     new->is_free = false;
     new->next = NULL;
 }
+/*
+ * Search first free page. If there is no free page, make new one.
+ */
+int64_t scan_free_list(){
+    int64_t last_offset;
+    free_list *pointer;
+    free_list *new;
 
-void insert_free_list(){
+    for(pointer = head; pointer->offset != 0 && pointer->next != NULL; pointer = pointer->next){
+        if(pointer->is_free == true){
+            return pointer->offset;
+        }
+        last_offset = pointer->offset;
+    }
+    // If there is no free page, create new free page.
+    pointer->offset = last_offset + 4096;
+    pointer->is_free = true;
+    new = (free_list *)malloc(sizeof(free_list));
+    new->offset = 0;
+    new->is_free = false;
+    pointer->next = new;
+    new->next = NULL;
+    
+    return pointer->offset; 
+}
+/*
+ * Find in-use page number.
+ */
+int64_t scan_use_list(){
+    int64_t count = 0;
+    free_list *pointer;
+
+    for(pointer = head; pointer->offset != 0 && pointer->next != NULL; pointer = pointer->next){
+        if(pointer->is_free == false){
+            count++;
+        }
+    }
+    
+    return count;
+}
+
+
+/*
+ * Change free page to using page.
+ */
+void change_free_list(int64_t offset){
+    free_list *pointer;
+
+    for(pointer = head; pointer->offset != 0 && pointer->next != NULL; pointer = pointer->next){
+        if(pointer->offset == offset){
+            pointer->is_free = false;
+        }
+    }    
+}
+
+/*
+ * Change using page to free page.
+ */
+void vacuum_free_list(int64_t offset){
+    free_list *pointer;
+    // New free page will be used.
+
+    for(pointer = head; pointer->offset != 0 && pointer->next != NULL; pointer = pointer->next){
+        if(pointer->offset == offset){
+            pointer->is_free = true;
+        }
+    }
+}
+
+///////////////////////////////////////////////////////////////
+//Page manager
+/*
+ * Initialize header page.
+ */
+void init_header_page(){
+    int64_t fp_offset = 4096;
+    // Root page is not created yet.
+    int64_t rp_offset = 0;
+    int64_t pnum = 1;
+
+    /* Seek from default offset.
+     * If new file, default offset will be 0.
+     * Otherwise, default offset will be another number.
+     */
+    fseeko(fp, default_offset, SEEK_SET);
+    fwrite(&fp_offset, 8, 1, fp);
+    fwrite(&rp_offset, 8, 1, fp);
+    fwrite(&pnum, 8, 1, fp);
+}
+void modify_header_page(){
+    int64_t fp_offset = scan_free_list();
+    int64_t pnum = scan_use_list();
+
+    // Move file pointer to header page location.
+    fseeko(fp, default_offset, SEEK_SET); 
+    fwrite(&fp_offset, 8, 1, fp);
+    // What about root page offset?? >> Later
+    fseeko(fp, 8, SEEK_CUR);
+    fwrite(&pnum, 8, 1, fp);
+}
+void init_leaf_page(){
+    
+}
+void modify_leaf_page(){
+
+}
+void init_internal_page(){
+
+}
+void modify_internal_page(){
 
 }
 
+////////////////////////////////////////////////////////////////
+//API
 /*
  * Open existing data file using pathname or create one if not existed.
  * If success, return 0. Otherwise, return non-zero value.
@@ -1283,9 +1395,11 @@ int open_db(char *pathname){
     init_free_list();
 
     // Initialize header page.
+    init_header_page();
 
-
-    // Manage free list.
+    // Synchronize
+    fflush(fp);
+    fd = fileno(fp);
 
     return 0;
 }
@@ -1295,6 +1409,7 @@ int open_db(char *pathname){
  * If success, return 0. Otherwise, return non-zero value.
  */
 int insert(int64_t key, char *value){
+
 
 }
 
@@ -1313,16 +1428,5 @@ char *find(int64_t key){
  */
 int delete(int64_t key){
 
-}
-/*
- * Search free page
- */
-void scan(){
-    free_list *pointer;
-
-    for(pointer = head; pointer->offset != 0 && pointer->next != NULL; pointer = pointer->next){
-        if(pointer->is_free == true)
-            break;
-    }
 }
 
