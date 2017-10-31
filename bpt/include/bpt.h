@@ -53,11 +53,11 @@ typedef struct record {
  *
  *
  */
-typedef struct free_list {
+typedef struct page_list {
     int64_t offset;
     bool is_free;
-    struct free_list *next;
-} free_list;
+    struct page_list *next;
+} page_list;
 
 /* Type representing a node in the B+ tree.
  * This type is general enough to serve for both
@@ -150,7 +150,7 @@ int cut( int length );
 
 // Insertion.
 
-record * make_record(int value);
+record * make_record(char value[]);
 node * make_node( void );
 node * make_leaf( void );
 int get_left_index(node * parent, node * left);
@@ -165,7 +165,7 @@ node * insert_into_node_after_splitting(node * root, node * parent,
 node * insert_into_parent(node * root, node * left, int key, node * right);
 node * insert_into_new_root(node * left, int key, node * right);
 node * start_new_tree(int key, record * pointer);
-node * insert_tree( node * root, int key, int value );
+node * insert_tree( node * root, int key, char value[] );
 
 // Deletion.
 

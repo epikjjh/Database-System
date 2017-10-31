@@ -67,6 +67,8 @@
  * default value.
  */
 int order = DEFAULT_ORDER;
+int leaf_order = 32;
+int internal_order = 249;
 
 /* The queue is used to print the tree in
  * level order, starting from the root
@@ -475,7 +477,7 @@ int cut( int length ) {
 /* Creates a new record to hold the value
  * to which a key refers.
  */
-record * make_record(int value) {
+record * make_record(char value[]) {
     record * new_record = (record *)malloc(sizeof(record));
     if (new_record == NULL) {
         perror("Record creation.");
@@ -817,7 +819,7 @@ node * start_new_tree(int key, record * pointer) {
  * however necessary to maintain the B+ tree
  * properties.
  */
-node * insert_tree( node * root, int key, int value ) {
+node * insert_tree( node * root, int key, char value[] ) {
 
     record * pointer;
     node * leaf;
@@ -1250,7 +1252,7 @@ node * destroy_tree(node * root) {
 }
 //////////////////////////////////////////////////////////
 //List manager
-void init_free_list(){
+void init_page_list(){
     head = (free_list *)malloc(sizeof(free_list));
     free_list *new = (free_list *)malloc(sizeof(free_list));
     
@@ -1265,10 +1267,11 @@ void init_free_list(){
 /*
  * Search first free page. If there is no free page, make new one.
  */
-int64_t scan_free_list(){
+int64_t scan_free_page(){
     int64_t last_offset;
-    free_list *pointer;
-    free_list *new;
+    int64_t next_fp_offset = 0;
+    page_list *pointer;
+    page_list *new;
 
     for(pointer = head; pointer->offset != 0 && pointer->next != NULL; pointer = pointer->next){
         if(pointer->is_free == true){
@@ -1276,7 +1279,8 @@ int64_t scan_free_list(){
         }
         last_offset = pointer->offset;
     }
-    // If there is no free page, create new free page.
+    /* If there is no free page, create new free page. */
+    // Modify page list.
     pointer->offset = last_offset + 4096;
     pointer->is_free = true;
     new = (free_list *)malloc(sizeof(free_list));
@@ -1284,15 +1288,19 @@ int64_t scan_free_list(){
     new->is_free = false;
     pointer->next = new;
     new->next = NULL;
+
+    // Create free page. Always this free page is last one.
+    fseeko(fp, default_offset + pointer->offset, SEEK_SET);
+    fwrite(&next_fp_offset, 8, 1, fp);
     
     return pointer->offset; 
 }
 /*
  * Find in-use page number.
  */
-int64_t scan_use_list(){
+int64_t scan_use_page(){
     int64_t count = 0;
-    free_list *pointer;
+    page_list *pointer;
 
     for(pointer = head; pointer->offset != 0 && pointer->next != NULL; pointer = pointer->next){
         if(pointer->is_free == false){
@@ -1307,8 +1315,8 @@ int64_t scan_use_list(){
 /*
  * Change free page to using page.
  */
-void change_free_list(int64_t offset){
-    free_list *pointer;
+void change_free_page(int64_t offset){
+    page_list *pointer;
 
     for(pointer = head; pointer->offset != 0 && pointer->next != NULL; pointer = pointer->next){
         if(pointer->offset == offset){
@@ -1320,8 +1328,8 @@ void change_free_list(int64_t offset){
 /*
  * Change using page to free page.
  */
-void vacuum_free_list(int64_t offset){
-    free_list *pointer;
+void vacuum_using_page(int64_t offset){
+    page_list *pointer;
     // New free page will be used.
 
     for(pointer = head; pointer->offset != 0 && pointer->next != NULL; pointer = pointer->next){
@@ -1351,28 +1359,15 @@ void init_header_page(){
     fwrite(&rp_offset, 8, 1, fp);
     fwrite(&pnum, 8, 1, fp);
 }
-void modify_header_page(){
+void modify_header_page(int64_t rp_offset){
     int64_t fp_offset = scan_free_list();
     int64_t pnum = scan_use_list();
 
     // Move file pointer to header page location.
     fseeko(fp, default_offset, SEEK_SET); 
     fwrite(&fp_offset, 8, 1, fp);
-    // What about root page offset?? >> Later
-    fseeko(fp, 8, SEEK_CUR);
+    fwrite(&rp_offset, 8, 1, fp); 
     fwrite(&pnum, 8, 1, fp);
-}
-void init_leaf_page(){
-    
-}
-void modify_leaf_page(){
-
-}
-void init_internal_page(){
-
-}
-void modify_internal_page(){
-
 }
 
 ////////////////////////////////////////////////////////////////
@@ -1391,8 +1386,8 @@ int open_db(char *pathname){
     // ftello function uses off_t type.
     default_offset = ftello(fp);
 
-    // Initialize free list.
-    init_free_list();
+    // Initialize page list.
+    init_page_list();
 
     // Initialize header page.
     init_header_page();
@@ -1403,17 +1398,117 @@ int open_db(char *pathname){
 
     return 0;
 }
+//////////////////////////////////////////////////////////
+//INSERTION
+int64_t init_leaf_page(int64_t offset){
+    int64_t p_offset = 0;
+    int64_t rs_offset = 0;
+    int is_leaf = 1;
+    int num_keys = 0;
+
+    fseeko(fp, default_offset + offset, SEEK_SET);
+    // Parent page offset : initially zero.
+    fwrite(&p_offset, 8, 1, fp);
+    // Is Leaf : True.
+    fwrite(&is_leaf, 4, 1, fp);
+    // Number of keys : zero.
+    fwrite(&num_keys, 4, 1, fp);
+    
+    // Move file pointer.
+    fseeko(fp, default_offset + offset + 120, SEEK_SET);
+    // Right sibiling page offset : zero(Rightmost leaf page).
+    fwrite(&rs_offset, 8, 1, fp);
+
+    return offset;
+}
+void insert_into_leaf_page(int64_t offset){
+
+}
+void insert_into_leaf_page_after_splitting(){
+
+}
+void init_internal_page(int64_t offset){
+
+}
+void init_internal_page(int64_t offset){
+
+}
+void insert_into_internal_page(){
+
+}
+void insert_into_internal_page_after_splitting(){
+
+}
+void insert_into_parent_page(){
+
+}
+int64_t insert_into_new_root_page(int64_t lp_offset, int key, int64_t rp_offset){
+
+
+
+}
+int64_t start_new_tree_page(int64_t key, char *value){
+    // Find free page, and change to root page(leaf page).
+    int64_t rp_offset = scan_free_page();
+    int num_keys;
+
+    // Initialize leaf page.
+    init_leaf_page(rp_offset);
+    // Change free page to using page.
+    change_free_page(rp_offset);
+
+    // Move file pointer & write key + value.
+    fseeko(fp, default_offset + rp_offset + 128, SEEK_SET);
+    fwrite(&key, 8, 1, fp);
+    fwrite(value, 1, 120, fp);
+
+    // Move file pointer & modify number of keys.
+    fseeko(fp, default_offset + rp_offset + 12, SEEK_SET);
+    fread(&num_keys, 4, 1, fp);
+    num_keys++;
+    fseeko(fp, default_offset + rp_offset + 12, SEEK_SET);
+    fwrite(&num_keys, 4, 1, fp);
+
+    // Return root new page offset.
+    return rp_offset;
+}
 
 /*
  * Insert input key/value(record) to data file at the right place.
  * If success, return 0. Otherwise, return non-zero value.
  */
 int insert(int64_t key, char *value){
+    record *pointer;
+    int64_t rp_offset;
+
+    // Ignore duplicates. -> Later
+
+    // Do not need to make record.
+    
+    /* Case : the tree does not exist yet.
+     * Create new root page.
+     */
+
+    // Read root page offset.
+    fseeko(fp, default_offset+8, SEEK_SET); 
+    fread(&rp_offset, 8, 1, fp);
+    if(rp_offset == 0){
+        // Create new root page.
+        rp_offset = start_new_tree_page(key, value);
+        // Modify header page.
+        modify_header_page(rp_offset);
+    }
+    
+    // Case : the tree already exists.
+
+    // Find leaf page by key.
+
 
 
 }
 
-
+//////////////////////////////////////////////////////////
+//Find
 /*
  * Find the record containing input key.
  * If found matching key, return matched value string. Otherwise, return NULL.
@@ -1422,6 +1517,8 @@ char *find(int64_t key){
 
 }
 
+///////////////////////////////////////////////////////////
+//DELETE
 /*
  * Find the matching record and delete it if found.
  * If success, return 0. Otherwise, return non-zero value.
