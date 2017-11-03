@@ -1421,29 +1421,197 @@ int64_t init_leaf_page(int64_t offset){
 
     return offset;
 }
-void insert_into_leaf_page(int64_t offset){
+int64_t init_internal_page(int64_t offset, int64_t p_offset){
+    // Setting page header.
+    int is_leaf = 0, num_keys = 0;
 
+    fseeko(fp, default_offset + offset, SEEK_SET);
+    // Parent page offset.
+    fwrite(&p_offset, 8, 1, fp);
+    // Is Leaf : Fales.
+    fwrite(&is_leaf, 4, 1, fp);
+    // Number of keys : zero.
+    fwrite(&num_keys, 4, 1, fp);
+
+    return offset;
+}
+int64_t get_left_offset(int64_t p_offset, int64_t l_offset){
+    int64_t left_offset = 0, target_offset;
+    int num_keys;
+
+    // Setting number of keys. : Parent page
+    fseeko(fp, default_offset + p_offset + 12, SEEK_SET);
+    fread(&num_keys, 4, 1, fp);
+
+    while(left_offset <= num_keys){
+        // Setting offset.
+        if(left_offset == 0)
+            fseeko(fp, default_offset + p_offset + 120, SEEK_SET);
+        else
+            fseeko(fp, default_offset + p_offset + 128 + (left_offset-1)*16 + 8, SEEK_SET);
+        fread(&target_offset, 8, 1, fp);
+
+        if(l_offset == target_offset){
+            break;
+        }
+        left_offset++;
+    }
+    
+    return left_offset;
+}
+int64_t insert_into_leaf_page(int64_t leaf_offset, int64_t key, char *value){
+    int i, insertion_point, num_keys;
+    int64_t target_key, temp_key;
+    char temp_value[120];
+    
+
+    insertion_point = 0;
+
+    // Setting number of keys. : Leaf page
+    fseeko(fp, default_offset + leaf_offset + 12, SEEK_SET);
+    fread(&num_keys, 4, 1, fp);
+
+    while(insertion_point < num_keys){
+        // Setting target key. : Leaf page
+        fseeko(fp, default_offset + leaf_offset + 128 + insertion_point*128, SEEK_SET);
+        fread(&target_key, 8, 1, fp);
+        if(key <= target_key){
+            break;
+        }
+        insertion_point++;
+    }
+
+    // Move existing memory.
+    for(i = num_keys; i > insertion_point; i--){
+        fseeko(fp, default_offset + leaf_offset + 128 + i*128, SEEK_SET);
+        fread(&temp_key, 8, 1, fp);
+        fread(&temp_value, 1, 120, fp);
+
+        fseeko(fp, default_offset + leaf_offset + 128 + (i+1)*128, SEEK_SET);
+        fwrite(&temp_key, 8, 1, fp);
+        fwrite(&temp_value, 1, 120, fp);
+    }
+
+    // Write new key & value.
+    fseeko(fp, default_offset + leaf_offset + 128 + insertion_point*128, SEEK_SET);
+    fwrite(&key, 8, 1, fp);
+    fwrite(value, 1, 120, fp);
+    
+    // Modify number of keys.
+    num_keys++;
+    fseeko(fp, default_offset + leaf_offset + 12, SEEK_SET);
+    fwrite(&num_keys, 4, 1, fp);
+
+    return leaf_offset;
 }
 void insert_into_leaf_page_after_splitting(){
 
 }
-void init_internal_page(int64_t offset){
+int64_t insert_into_internal_page(int64_t rp_offset, int64_t p_offset, int64_t left_offset, int64_t key, int64_t r_offset){
+    int64_t temp_key, temp_offset;
+    int num_keys, i;
 
-}
-void insert_into_internal_page(){
+    // Setting number of keys. : Parent page
+    fseeko(fp, default_offset + p_offset + 12, SEEK_SET);
+    fread(&num_keys, 4, 1, fp);
 
+    // Move existing memory.
+    // Case1 : left offset is 0. & Case2 : left offset is not 0.
+    if(left_offset != 0){
+        for(i = num_keys; i > (left_offset-1); i--){
+            fseeko(fp, default_offset + p_offset + 128 + i*16, SEEK_SET);
+            fread(&temp_key, 8, 1, fp);
+            fread(&temp_offset, 8, 1, fp);
+
+            fseeko(fp, default_offset + p_offset + 128 + (i+1)*16, SEEK_SET);
+            fwrite(&temp_key, 8, 1, fp);
+            fwrite(&temp_offset, 8, 1, fp);
+        }
+    }
+    // Write new key & offset.
+    // Case1 : left offset is 0. & Case2 : left offset is not 0.
+    fseeko(fp, default_offset + p_offset + 128 + (left_offset)*16, SEEK_SET);
+    fwrite(&key, 8, 1, fp);
+    fwrite(&r_offset, 8, 1, fp);
+
+    // Modify number of keys. : Parent page
+    num_keys++;
+    fseeko(fp, default_offset + p_offset + 12, SEEK_SET);
+    fwrite(&num_keys, 4, 1, fp);
+
+    return rp_offset;
 }
 void insert_into_internal_page_after_splitting(){
 
 }
-void insert_into_parent_page(){
+int64_t insert_into_parent_page(int64_t rp_offset, int64_t l_offset, int64_t key, int64_t r_offset){
+    int64_t left_offset, p_offset;
+    int num_keys;
+    
+    // Setting left page's parent page offset.
+    fseeko(fp, default_offset + l_offset, SEEK_SET);
+    fread(&p_offset, 8, 1, fp);
 
+    /* Case : new root. */
+
+    if(p_offset == NULL)
+        return insert_into_new_root_page(l_offset, key, r_offset);
+
+    /* Case : leaf of node. (Remainder of function body.) */
+
+    // Find the parent page's offset to the left page.
+    left_offset = get_left_offset(p_offset, l_offset);
+
+    /* Simple case : the new key fits into the page. */
+    // Setting number of keys. : parent page
+    fseeko(fp, default_offset + p_offset + 12, SEEK_SET);
+    fread(&num_keys, 4, 1, fp);
+
+    if(num_keys < internal_order -1)
+        return insert_into_internal_page(rp_offset, p_offset, left_offset, key, r_offset);
+        
+    /* Harder case : split a page in order to preserve the B+ tree properties. */
+    // Return -> Later
+    return insert_into_internal_page_after_splitting(rp_offset, p_offset, left_offset, key, r_offset);
 }
-int64_t insert_into_new_root_page(int64_t lp_offset, int key, int64_t rp_offset){
+int64_t insert_into_new_root_page(int64_t l_offset, int64_t key, int64_t r_offset){
+    int64_t new_rp_offset = scan_free_page();
+    int64_t p_offset = 0; 
+    int is_leaf = 0, num_keys = 1;
 
+    // After using free page, change free page which is used and modify header page.
+    change_free_page(new_rp_offset);
+    modify_header_page(new_rp_offset);
 
+    // Move file pointer to new root page.
+    fseeko(fp, default_offset + new_rp_offset, SEEK_SET);
+    // First, set page header.
+    fwrite(&p_offset, 8, 1, fp);
+    fwrite(&is_leaf, 4, 1, fp);
+    fwrite(&num_keys, 4, 1, fp);
 
+    // Move file pointer & write key + value.
+    fseeko(fp, default_offset + new_rp_offset + 120, SEEK_SET);
+    // Insert left page offset.
+    fwrite(&l_offset, 8, 1, fp);
+    // Insert key.
+    fwrite(&key, 8, 1, fp);
+    // Insert right page offset.
+    fwrite(&r_offset, 8, 1, fp);
+
+    // Move file pointer & modify parent page offset : left page's page header section.
+    fseeko(fp, default_offset + l_offset, SEEK_SET);
+    fwrite(&new_rp_offset, 8, 1, fp);
+
+    // Move file pointer & modify parent page offset : right page's page header section.
+    fseeko(fp, default_offset + r_offset, SEEK_SET);
+    fwrite(&new_rp_offset, 8, 1, fp);
+
+    return new_rp_offset;
 }
+/*
+ * After calling this function, modify header page.
+ */
 int64_t start_new_tree_page(int64_t key, char *value){
     // Find free page, and change to root page(leaf page).
     int64_t rp_offset = scan_free_page();
@@ -1476,19 +1644,23 @@ int64_t start_new_tree_page(int64_t key, char *value){
  */
 int insert(int64_t key, char *value){
     record *pointer;
-    int64_t rp_offset;
+    int64_t rp_offset,lp_offset;
+    int num_keys;
 
-    // Ignore duplicates. -> Later
+    // Setting root page offset.
+    fseeko(fp, default_offset+8, SEEK_SET); 
+    fread(&rp_offset, 8, 1, fp);
+
+    // Ignore duplicates.
+    if(find(key) != NULL)
+        // Insert fail. Return non-zero value.
+        return 1;
 
     // Do not need to make record.
     
     /* Case : the tree does not exist yet.
      * Create new root page.
      */
-
-    // Read root page offset.
-    fseeko(fp, default_offset+8, SEEK_SET); 
-    fread(&rp_offset, 8, 1, fp);
     if(rp_offset == 0){
         // Create new root page.
         rp_offset = start_new_tree_page(key, value);
@@ -1497,11 +1669,24 @@ int insert(int64_t key, char *value){
     }
     
     // Case : the tree already exists.
-
     // Find leaf page by key.
 
+    lp_offset = find_leaf_page(rp_offset, key);
 
+    // Case : leaf has room for key and pointer.
+    
+    // Setting number of keys.
+    fseeko(fp, default_offset+lp_offset+12, SEEK_SET);
+    fread(&num_keys, 4, 1, fp);
 
+    if(num_keys < leaf_order - 1){
+        // Insert into leaf page -> later
+        return 
+    }
+
+    // Case : leaf must be split
+    // Insert into leaf after splitting -> later
+    return
 }
 
 //////////////////////////////////////////////////////////
@@ -1560,7 +1745,7 @@ int64_t find_leaf_page(int64_t rp_offset, int64_t key){
  * Find the record containing input key.
  * If found matching key, return matched value string. Otherwise, return NULL.
  */
-char *find(int64_t key){
+char * find(int64_t key){
     int64_t rp_offset,lp_offset,target_key;
     int i = 0, num_keys;
     char value[120];
