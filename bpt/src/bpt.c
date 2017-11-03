@@ -100,7 +100,7 @@ int64_t default_offset;
  * Linked list
  *
  */
-free_list *head = NULL;
+page_list *head = NULL;
 
 // FUNCTION DEFINITIONS.
 
@@ -1253,8 +1253,8 @@ node * destroy_tree(node * root) {
 //////////////////////////////////////////////////////////
 //List manager
 void init_page_list(){
-    head = (free_list *)malloc(sizeof(free_list));
-    free_list *new = (free_list *)malloc(sizeof(free_list));
+    head = (page_list *)malloc(sizeof(page_list));
+    page_list *new = (page_list *)malloc(sizeof(page_list));
     
     // Offset 0 - 4095 is for header page.
     head->offset = 4096;
@@ -1283,7 +1283,7 @@ int64_t scan_free_page(){
     // Modify page list.
     pointer->offset = last_offset + 4096;
     pointer->is_free = true;
-    new = (free_list *)malloc(sizeof(free_list));
+    new = (page_list *)malloc(sizeof(page_list));
     new->offset = 0;
     new->is_free = false;
     pointer->next = new;
@@ -1430,9 +1430,6 @@ void insert_into_leaf_page_after_splitting(){
 void init_internal_page(int64_t offset){
 
 }
-void init_internal_page(int64_t offset){
-
-}
 void insert_into_internal_page(){
 
 }
@@ -1510,10 +1507,97 @@ int insert(int64_t key, char *value){
 //////////////////////////////////////////////////////////
 //Find
 /*
+ * Determine whether it is leaf page or not.
+ */
+int leaf_page_judge(int64_t offset){
+    int is_leaf;
+
+    // Read is leaf value.
+    fseeko(fp, default_offset+8, SEEK_SET); 
+    fread(&is_leaf, 4, 1, fp);
+
+    if(is_leaf)
+        return 1;
+    else
+        return 0;
+}
+
+/*
+ *
+ */
+int64_t find_leaf_page(int64_t rp_offset, int64_t key){
+    int64_t offset = rp_offset, target_key;
+    int num_keys,i = 0;
+     
+    // Empty tree.
+    if(offset == 0){
+        return offset;
+    }
+    while(!leaf_page_judge(offset)){
+        i = 0;
+        // Setting number of keys.
+        fseeko(fp, default_offset+offset+12, SEEK_SET);
+        fread(&num_keys, 4, 1, fp);
+        
+        while(i < num_keys){
+            // Setting target key.
+            fseeko(fp, default_offset+offset+128+(16*i), SEEK_SET);
+            fread(&target_key, 8, 1, fp);
+
+            if(key >= target_key)
+                i++;
+            else
+                break;
+        }
+        // Change offset.
+        fseeko(fp, default_offset+offset+128+(16*i)+8, SEEK_SET);
+        fread(&offset, 8, 1, fp);
+    }
+
+    return offset;
+}
+/*
  * Find the record containing input key.
  * If found matching key, return matched value string. Otherwise, return NULL.
  */
 char *find(int64_t key){
+    int64_t rp_offset,lp_offset,target_key;
+    int i = 0, num_keys;
+    char value[120];
+
+    // Setting root page offset. (From header page)
+    fseeko(fp, default_offset+8, SEEK_SET);
+    fread(&rp_offset, 8, 1, fp);
+
+    // Setting leaf page offset.
+    lp_offset = find_leaf_page(rp_offset, key);
+
+    // In case of empty tree.
+    if(lp_offset == 0)
+        return NULL;
+
+    // Setting number of keys.
+    fseeko(fp, default_offset+lp_offset+12, SEEK_SET);
+    fread(&num_keys, 4, 1, fp);
+
+    for(i = 0; i < num_keys; i++){
+        // Setting target key.
+        fseeko(fp, default_offset+lp_offset+128+(i*128), SEEK_SET);
+        fread(&target_key, 8, 1, fp);
+
+        if(target_key == key)
+            break;
+    }
+    if(i == num_keys)
+        return NULL;
+
+    else{
+        // Setting value.
+        fseeko(fp, default_offset+lp_offset+128+(i*128)+8, SEEK_SET);
+        fread(&value, 1, 120, fp);
+
+        return value;
+    }
 
 }
 

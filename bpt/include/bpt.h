@@ -49,7 +49,7 @@ typedef struct record {
 } record;
 
 /*
- * Free list
+ * Page list
  *
  *
  */
