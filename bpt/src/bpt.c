@@ -1521,7 +1521,7 @@ int64_t insert_into_leaf_page_after_splitting(int64_t rp_offset, int64_t leaf_of
     temp_values =(char **)malloc(leaf_order * sizeof(char *));
     
     for(i = 0; i < leaf_order; i++){
-        temp_values[i] = malloc(sizeof(char) * 120);
+        temp_values[i] = (char *)malloc(sizeof(char) * 120);
     }
 
     insertion_index = 0;
@@ -1548,6 +1548,9 @@ int64_t insert_into_leaf_page_after_splitting(int64_t rp_offset, int64_t leaf_of
         fread((temp_keys+j), 8, 1, fp);
         fread(*(temp_values+j), 1, 120, fp);
     }
+    // Insert new key & value.
+    temp_keys[insertion_index] = key;
+    strcpy(temp_values[insertion_index], value);
 
     // Setting existing number of keys to zero : Leaf page.
     num_keys = 0;
@@ -1648,15 +1651,98 @@ int64_t insert_into_internal_page(int64_t rp_offset, int64_t p_offset, int64_t l
     return rp_offset;
 }
 int64_t insert_into_internal_page_after_splitting(int64_t rp_offset, int64_t old_offset, int left_offset, int64_t key, int64_t r_offset){
-    int i, j, split, k_prime;
-    int64_t *temp_keys, new_internal_offset, child_offset;
-    char **temp_values;
+    int i, j, split, k_prime, old_num_keys, new_num_keys;
+    int64_t *temp_keys, *temp_offsets, new_internal_offset, child_offset, p_offset;
 
     /* Create temporal keys & values. */
-    temp_keys = (int64_t *)malloc();
+    temp_keys = (int64_t *)malloc(internal_order * sizeof(int64_t));
+    temp_values = (int64_t *)malloc((internal_order + 1) * sizeof(int64_t));
 
-     
+    /* Move existing key & value to temporal key & offset. */
+    // Setting number of keys : Old internal page
+    fseeko(fp, default_offset + old_offset + 12, SEEK_SET);
+    fread(&old_num_keys, 4, 1, fp);
 
+    // Move offsets.
+    for(i = 0, j = 0, i < old_num_keys + 1; i++, j++){
+        if(j == left_offset + 1)
+            j++;
+        if(i == 0)
+            fseeko(fp, default_offset + old_offset + 120, SEEK_SET);
+        else
+            fseeko(fp, default_offset + old_offset + 128 + 8 + 16*(i-1), SEEK_SET);
+
+        fread((temp_offsets+j), 8, 1, fp);
+    }
+    // Move keys.
+    for(i = 0, j = 0; i < old_num_keys; i++, j++){
+        if(j == left_offset)
+            j++;
+        fseeko(fp, default_offset + old_offset + 128 + 16*i, SEEK_SET);
+        fread((temp_keys+j), 8, 1, fp);
+    }
+    temp_offsets[left_offset + 1] = r_offset;
+    temp_keys[left_offset] = key;
+
+    /* Create new internal page then move temporal key & value to existing internal page and new internal page. */
+    // Setting parent offset.
+    fseeko(fp, default_offset + old_offset, SEEK_SET);
+    fread(&p_offset, 8, 1, fp);
+
+    split = cut(internal_order);
+    // Setting new internal page's parent offset. 
+    new_internal_offset = init_internal_page(scan_free_page(), p_offset);
+
+    // Setting number of keys. : New internal page
+    fseeko(fp, default_offset + new_internal_offset + 12, SEEK_SET);
+    fread(&new_num_keys, 4, 1, fp);
+
+    for(i = 0; i < split - 1; i++){
+        if(i == 0){
+            fseeko(fp, default_offset + old_offset + 120, SEEK_SET);
+            fwrite((temp_offsets + i), 8, 1, fp);
+            fseeko(fp, default_offset + old_offset + 128, SEEK_SET);
+            fwrite((temp_keys + i), 8, 1, fp);
+        }
+        else{
+            fseeko(fp, default_offset + old_offset + 128 + 16*(i-1) + 8, SEEK_SET);    
+            fwrite((temp_offsets + i), 8, 1, fp);
+            fseeko(fp, default_offset + old_offset + 128 + 16*(i-1), SEEK_SET);
+            fwrite((temp_keys + i), 8, 1, fp);
+        }
+        old_num_keys++;
+    }
+    fseeko(fp, default_offset + old_offset + 128 + 16*(i-1) + 8, SEEK_SET);
+    fwrite((temp_offsets + i), 8, 1, fp);
+    k_prime = temp_keys[split - 1];
+
+    for(++i, j = 0; i < internal_order; i++, j++){
+        if(j == 0){
+            fseeko(fp, default_offset + new_internal_offset + 120, SEEK_SET);
+            fwrite((temp_offsets + i), 8, 1, fp);
+            fseeko(fp, default_offset + new_internal_offset + 128, SEEK_SET);
+            fwrite((temp_keys + i), 8, 1, fp);
+        }
+        else{
+            fseeko(fp, default_offset + new_internal_offset + 128 + 16*(j-1) + 8, SEEK_SET);
+            fwrite((temp_offsets + i), 8, 1, fp);
+            fseeko(fp, default_offset + new_internal_offset + 128 + 16*(j-1), SEEK_SET);
+            fwrite((temp_keys + i), 8, 1, fp);
+        }
+    }
+    fseeko(fp, default_offset + new_internal_offset + 128 + 16*(j-1) + 8, SEEK_SET);
+    fwrite((temp_offsets + i), 8, 1, fp);
+
+    // Free temporal key & values.
+    free(temp_keys);
+    free(temp_offsets);
+    
+    // Parent setting : Already done in above.
+
+    // Child setting ?? -> Later
+
+    // Return -> Later
+    return insert_into_parent_page();
 }
 int64_t insert_into_parent_page(int64_t rp_offset, int64_t l_offset, int64_t key, int64_t r_offset){
     int64_t left_offset, p_offset;
