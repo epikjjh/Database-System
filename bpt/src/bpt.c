@@ -1504,8 +1504,114 @@ int64_t insert_into_leaf_page(int64_t leaf_offset, int64_t key, char *value){
 
     return leaf_offset;
 }
-void insert_into_leaf_page_after_splitting(){
+int64_t insert_into_leaf_page_after_splitting(int64_t rp_offset, int64_t leaf_offset, int64_t key, char *value){
+    int64_t new_leaf_offset, *temp_keys, target_key, new_key, new_rs_offset = 0, p_offset;
+    int insertion_index, split, i, j, num_keys, new_num_keys;
+    char **temp_values;
 
+    // Make new leaf page.
+    new_leaf_offset = init_leaf_page(scan_free_page());
+
+    // After using free page, change free page which is used and modify header page.
+    change_free_page(new_leaf_offset);
+    modify_header_page(rp_offset);
+
+    // Make temp key & value.
+    temp_keys = (int64_t *)malloc(leaf_order * sizeof(int64_t));
+    temp_values =(char **)malloc(leaf_order * sizeof(char *));
+    
+    for(i = 0; i < leaf_order; i++){
+        temp_values[i] = malloc(sizeof(char) * 120);
+    }
+
+    insertion_index = 0;
+
+    /* Setting insertion index. */
+    while(insertion_index < leaf_order -1){
+        // Setting target key. : Leaf page
+        fseeko(fp, default_offset + leaf_offset + 128 + 128*insertion_index, SEEK_SET);
+        fread(&target_key, 8, 1, fp);
+        if(target_key >= key){
+            break;
+        }
+        insertion_index++;
+    }
+
+    /* Move existing key & value to temporal page. */
+    // Setting number of keys. : Leaf page
+    fseeko(fp, default_offset + leaf_offset + 12, SEEK_SET);
+    fread(&num_keys, 4, 1, fp);
+    for(i = 0, j = 0; i < num_keys; i++, j++){
+        if(j == insertion_index)
+            j++;
+        fseeko(fp, default_offset + leaf_offset + 128 + 128*i, SEEK_SET);
+        fread((temp_keys+j), 8, 1, fp);
+        fread(*(temp_values+j), 1, 120, fp);
+    }
+
+    // Setting existing number of keys to zero : Leaf page.
+    num_keys = 0;
+    fseeko(fp, default_offset + leaf_offset + 12, SEEK_SET);
+    fwrite(&num_keys, 4, 1, fp);
+
+    split = cut(leaf_order - 1);
+
+    /* Move temporal key & value to existing leaf page and new leaf page. */
+    for(i = 0; i < split; i++){
+        fseeko(fp, default_offset + leaf_offset + 128 + 128*i, SEEK_SET);
+        fwrite((temp_keys+i), 8, 1, fp);
+        fwrite(*(temp_values+i), 1, 120, fp);
+        num_keys++; 
+    }
+    // Setting number of keys. : Existing leaf page.
+    fseeko(fp, default_offset + leaf_offset + 12, SEEK_SET);
+    fwrite(&num_keys, 4, 1, fp);
+
+    for(i = split, j = 0; i < order; i++, j++){
+        fseeko(fp, default_offset + new_leaf_offset + 128 + 128*j, SEEK_SET);
+        fwrite((temp_keys+i), 8, 1, fp);
+        fwrite(*(temp_values+i), 1, 120, fp);
+        new_num_keys++;
+    }
+    // Setting number of keys. : New leaf page.
+    fseeko(fp, default_offset + new_leaf_offset + 12, SEEK_SET);
+    fwrite(&new_num_keys, 4, 1, fp);
+
+    // Free temporal keys & values.
+    free(temp_keys);
+    for(i = 0; i < leaf_order; i++){
+        free(temp_values[i]);
+    }
+    free(temp_values);
+
+    /* Change right sibiling offset. */
+    // Setting right sibiling offset. : leaf page & new leaf page
+    fseeko(fp, default_offset + leaf_offset + 120);
+    fwrite(&new_leaf_offset, 8, 1, fp);
+
+    fseeko(fp, default_offset + new_leaf_offset +120);
+    fwrite(&new_rs_offset, 8, 1, fp);
+
+    // Reinitialize value which is not used. -> Later 
+    for(i = num_keys; i < leaf_order -1; i++){
+
+    }
+    for(i = new_num_keys; i < leaf_order -1; i++){
+
+    }
+
+    /* Setting parent & new key. */
+    // Setting parent offset.
+    fseeko(fp, default_offset + leaf_offset, SEEK_SET);
+    fread(&p_offset, 8, 1, fp);
+    fseeko(fp, default_offset + new_leaf_offset, SEEK_SET);
+    fwrite(&p_offset, 8, 1, fp);
+    // Setting new key.
+    fseeko(fp, default_offset + new_leaf_offset + 128, SEEK_SET);
+    fread(&new_key, 8, 1, fp);
+
+    // Return -> Later
+    return insert_into_parent();
 }
 int64_t insert_into_internal_page(int64_t rp_offset, int64_t p_offset, int64_t left_offset, int64_t key, int64_t r_offset){
     int64_t temp_key, temp_offset;
@@ -1541,7 +1647,15 @@ int64_t insert_into_internal_page(int64_t rp_offset, int64_t p_offset, int64_t l
 
     return rp_offset;
 }
-void insert_into_internal_page_after_splitting(){
+int64_t insert_into_internal_page_after_splitting(int64_t rp_offset, int64_t old_offset, int left_offset, int64_t key, int64_t r_offset){
+    int i, j, split, k_prime;
+    int64_t *temp_keys, new_internal_offset, child_offset;
+    char **temp_values;
+
+    /* Create temporal keys & values. */
+    temp_keys = (int64_t *)malloc();
+
+     
 
 }
 int64_t insert_into_parent_page(int64_t rp_offset, int64_t l_offset, int64_t key, int64_t r_offset){
@@ -1621,6 +1735,8 @@ int64_t start_new_tree_page(int64_t key, char *value){
     init_leaf_page(rp_offset);
     // Change free page to using page.
     change_free_page(rp_offset);
+    // Modify header page? -> Later
+    modify_header_page(rp_offset);
 
     // Move file pointer & write key + value.
     fseeko(fp, default_offset + rp_offset + 128, SEEK_SET);
