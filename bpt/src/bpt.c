@@ -102,6 +102,15 @@ int64_t default_offset;
  */
 page_list *head = NULL;
 
+// FUNCTION DECLARATIONS.
+int64_t insert_into_parent_page(int64_t rp_offset, int64_t l_offset, int64_t key, int64_t r_offset);
+
+int64_t insert_into_new_root_page(int64_t l_offset, int64_t key, int64_t r_offset);
+
+int64_t find_leaf_page(int64_t rp_offset, int64_t key);
+
+char * find(int64_t key);
+
 // FUNCTION DEFINITIONS.
 
 // OUTPUT AND UTILITIES
@@ -1360,8 +1369,8 @@ void init_header_page(){
     fwrite(&pnum, 8, 1, fp);
 }
 void modify_header_page(int64_t rp_offset){
-    int64_t fp_offset = scan_free_list();
-    int64_t pnum = scan_use_list();
+    int64_t fp_offset = scan_free_page();
+    int64_t pnum = scan_use_page();
 
     // Move file pointer to header page location.
     fseeko(fp, default_offset, SEEK_SET); 
@@ -1589,18 +1598,20 @@ int64_t insert_into_leaf_page_after_splitting(int64_t rp_offset, int64_t leaf_of
 
     /* Change right sibiling offset. */
     // Setting right sibiling offset. : leaf page & new leaf page
-    fseeko(fp, default_offset + leaf_offset + 120);
+    fseeko(fp, default_offset + leaf_offset + 120, SEEK_SET);
     fwrite(&new_leaf_offset, 8, 1, fp);
 
-    fseeko(fp, default_offset + new_leaf_offset +120);
+    fseeko(fp, default_offset + new_leaf_offset + 120, SEEK_SET);
     fwrite(&new_rs_offset, 8, 1, fp);
 
-    // Reinitialize value which is not used. -> Later 
+    // Reinitialize value which is not used.
     for(i = num_keys; i < leaf_order -1; i++){
-
+        fseeko(fp, default_offset + leaf_offset + 128 + 128*i + 8, SEEK_SET);
+        fwrite(NULL, 1, 120, fp);
     }
     for(i = new_num_keys; i < leaf_order -1; i++){
-
+        fseeko(fp, default_offset + new_leaf_offset + 128 + 128*i + 8, SEEK_SET);
+        fwrite(NULL, 1, 120, fp);
     }
 
     /* Setting parent & new key. */
@@ -1614,7 +1625,7 @@ int64_t insert_into_leaf_page_after_splitting(int64_t rp_offset, int64_t leaf_of
     fread(&new_key, 8, 1, fp);
 
     // Return -> Later
-    return insert_into_parent();
+    return insert_into_parent(rp_offset, leaf_offset, new_key, new_leaf_offset);
 }
 int64_t insert_into_internal_page(int64_t rp_offset, int64_t p_offset, int64_t left_offset, int64_t key, int64_t r_offset){
     int64_t temp_key, temp_offset;
@@ -1656,7 +1667,7 @@ int64_t insert_into_internal_page_after_splitting(int64_t rp_offset, int64_t old
 
     /* Create temporal keys & values. */
     temp_keys = (int64_t *)malloc(internal_order * sizeof(int64_t));
-    temp_values = (int64_t *)malloc((internal_order + 1) * sizeof(int64_t));
+    temp_offsets = (int64_t *)malloc((internal_order + 1) * sizeof(int64_t));
 
     /* Move existing key & value to temporal key & offset. */
     // Setting number of keys : Old internal page
@@ -1664,7 +1675,7 @@ int64_t insert_into_internal_page_after_splitting(int64_t rp_offset, int64_t old
     fread(&old_num_keys, 4, 1, fp);
 
     // Move offsets.
-    for(i = 0, j = 0, i < old_num_keys + 1; i++, j++){
+    for(i = 0, j = 0; i < old_num_keys + 1; i++, j++){
         if(j == left_offset + 1)
             j++;
         if(i == 0)
@@ -1692,6 +1703,10 @@ int64_t insert_into_internal_page_after_splitting(int64_t rp_offset, int64_t old
     split = cut(internal_order);
     // Setting new internal page's parent offset. 
     new_internal_offset = init_internal_page(scan_free_page(), p_offset);
+    // Change free page.
+    change_free_page(new_internal_offset);
+    // Modify header page.
+    modify_header_page(rp_offset);
 
     // Setting number of keys. : New internal page
     fseeko(fp, default_offset + new_internal_offset + 12, SEEK_SET);
@@ -1729,6 +1744,7 @@ int64_t insert_into_internal_page_after_splitting(int64_t rp_offset, int64_t old
             fseeko(fp, default_offset + new_internal_offset + 128 + 16*(j-1), SEEK_SET);
             fwrite((temp_keys + i), 8, 1, fp);
         }
+        new_num_keys;
     }
     fseeko(fp, default_offset + new_internal_offset + 128 + 16*(j-1) + 8, SEEK_SET);
     fwrite((temp_offsets + i), 8, 1, fp);
@@ -1739,10 +1755,28 @@ int64_t insert_into_internal_page_after_splitting(int64_t rp_offset, int64_t old
     
     // Parent setting : Already done in above.
 
-    // Child setting ?? -> Later
+    /* Change number of keys : New & Old */
+    fseeko(fp, default_offset + old_offset + 12, SEEK_SET);
+    fwrite(&old_num_keys, 4, 1, fp);
+    fseeko(fp, default_offset + new_internal_offset + 12, SEEK_SET);
+    fwrite(&new_num_keys, 4, 1, fp);
+
+    // Child setting
+    for(i = 0; i <= new_num_keys; i++){
+        // Setting child offset.
+        if(i == 0){
+            fseeko(fp, default_offset + new_internal_offset + 120, SEEK_SET);
+        }
+        else{
+            fseeko(fp, default_offset + new_internal_offset + 128 + 16*(i-1) + 8, SEEK_SET);
+        }
+        fread(&child_offset, 8, 1, fp);
+        fseeko(fp, default_offset + child_offset, SEEK_SET);
+        fwrite(&new_internal_offset, 8, 1, fp);
+    }
 
     // Return -> Later
-    return insert_into_parent_page();
+    return insert_into_parent_page(rp_offset, old_offset, k_prime, new_internal_offset);
 }
 int64_t insert_into_parent_page(int64_t rp_offset, int64_t l_offset, int64_t key, int64_t r_offset){
     int64_t left_offset, p_offset;
@@ -1821,7 +1855,7 @@ int64_t start_new_tree_page(int64_t key, char *value){
     init_leaf_page(rp_offset);
     // Change free page to using page.
     change_free_page(rp_offset);
-    // Modify header page? -> Later
+    // Modify header page.
     modify_header_page(rp_offset);
 
     // Move file pointer & write key + value.
@@ -1882,13 +1916,15 @@ int insert(int64_t key, char *value){
     fread(&num_keys, 4, 1, fp);
 
     if(num_keys < leaf_order - 1){
-        // Insert into leaf page -> later
-        return 
+        // Insert into leaf page.
+        insert_into_leaf_page(lp_offset, key, value);
+        return 0;
     }
 
     // Case : leaf must be split
-    // Insert into leaf after splitting -> later
-    return
+    // Insert into leaf after splitting.
+    insert_into_leaf_after_splitting(rp_offset, lp_offset, key, value);
+    return 0;
 }
 
 //////////////////////////////////////////////////////////
@@ -1990,6 +2026,24 @@ char * find(int64_t key){
 
 ///////////////////////////////////////////////////////////
 //DELETE
+void get_neighbot_index(){
+
+}
+void remove_entry_from_node(){
+
+}
+void adjust_root(){
+
+}
+void coalesce_nodes(){
+
+}
+void redistribute_nodes(){
+
+}
+void delete_entry(){
+
+}
 /*
  * Find the matching record and delete it if found.
  * If success, return 0. Otherwise, return non-zero value.
@@ -1997,4 +2051,3 @@ char * find(int64_t key){
 int delete(int64_t key){
 
 }
-
