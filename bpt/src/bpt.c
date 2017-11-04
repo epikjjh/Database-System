@@ -1444,7 +1444,7 @@ int64_t init_internal_page(int64_t offset, int64_t p_offset){
 
     return offset;
 }
-int64_t get_left_offset(int64_t p_offset, int64_t l_offset){
+int get_left_offset(int64_t p_offset, int64_t l_offset){
     int64_t left_offset = 0, target_offset;
     int num_keys;
 
@@ -1559,7 +1559,7 @@ int64_t insert_into_leaf_page_after_splitting(int64_t rp_offset, int64_t leaf_of
     }
     // Insert new key & value.
     temp_keys[insertion_index] = key;
-    strcpy(temp_values[insertion_index], value);
+    memmove(temp_values[insertion_index], value, 120);
 
     // Setting existing number of keys to zero : Leaf page.
     num_keys = 0;
@@ -2026,14 +2026,74 @@ char * find(int64_t key){
 
 ///////////////////////////////////////////////////////////
 //DELETE
-void get_neighbot_index(){
+int get_neighbor_offset(int64_t offset){
+    int i,num_keys;
+    int64_t p_offset, target_offset;
+
+    // Setting number of keys. : Parent page of offset
+    fseeko(fp, default_offset + offset, SEEK_SET);
+    fread(&p_offset, 8, 1, fp);
+    
+    fseeko(fp, default_offset + p_offset + 12, SEEK_SET);
+    fread(&num_keys, 4, 1, fp);
+
+    for(i = 0; i <= num_keys; i++){
+        // Setting target offset.
+        if(i == 0){
+            fseeko(fp, default_offset + p_offset + 120, SEEK_SET);
+        }
+        else{
+            fseeko(fp, default_offset + p_offset + 128 + 16*(i-1) + 8, SEEK_SET);
+        }
+        fread(&target_offset, 8, 1, fp);
+
+        if(target_offset == offset){
+            return i -1;
+        }
+    }
+
+    // Error state.
+    exit(EXIT_FAILURE);
+}
+int64_t remove_entry_from_page(int64_t offset, int64_t key, char *value){
+    int i, num_offsets;
+
 
 }
-void remove_entry_from_node(){
+int64_t adjust_root(int64_t rp_offset){
+    int64_t new_rp_offset, p_offset = 0;
+    int num_keys;
 
-}
-void adjust_root(){
+    /* Case : nonempty root. Nothing to be done */
+    // Setting number of keys : Root page
+    fseeko(fp, default_offset + rp_offset + 12, SEEK_SET);
+    fread(&num_keys, 4, 1, fp);
 
+    if(num_keys > 0)
+        return rp_offset;
+
+    /* Case : empty root. */
+    if(!is_leaf){
+        // If it has a child, promote the first child as the new root.
+        fseeko(fp, default_offset + rp_offset + 120, SEEK_SET);
+        fread(&new_rp_offset, 8, 1, fp);
+
+        // Change parent offset : New root page
+        fseeko(fp, default_offset + new_rp_offset, SEEK_SET);
+        fwrite(&p_offset, 8, 1, fp);
+
+        // Modify header page.
+        modify_header_page(new_rp_offset);
+    }
+
+    // If it is a leaf, the the whole tree is empty.
+    else{
+        new_rp_offset = 0;
+        // Modify header page.
+        modify_header_page(new_rp_offset);
+    }
+    
+    return new_rp_offset;
 }
 void coalesce_nodes(){
 
@@ -2041,7 +2101,37 @@ void coalesce_nodes(){
 void redistribute_nodes(){
 
 }
-void delete_entry(){
+int64_t delete_entry(int64_t rp_offset, int64_t offset, int64_t key, char *value){
+    int min_keys, is_leaf, num_keys;
+
+    // Remove key and page offset from page. -> Later
+    key_leaf_offset = remove_entry_from__page();
+
+    /* Case : deletion from the root. */
+    if(key_leaf_offset == rp_offset)
+        // Later
+        return adjust_root();
+
+    /* Case : deletion from a node below the root. */
+
+    // Determine minimum allowable size of page, to be perserved after deletion.
+    // Setting is leaf : Key leaf offset
+    fseeko(fp, default_offset + key_leaf_offset + 8, SEEK_SET);
+    fread(&is_leaf, 4, 1, fp);
+    min_keys = is_leaf ? cut(leaf_order - 1) : cut(internal_order) - 1; 
+
+    /* Case : Simple case. Paage stays at or above minimum. */
+    // Setting number of keys : Key leaf offset
+    fseeko(fp, default_offset + key_leaf_offset + 12, SEEK_SET);
+    fread(&num_keys, 4, 1, fp);
+
+    if(num_keys >= min_keys)
+        return rp_offset;
+
+    /* Case : page falls below minimum. Either coalescence or redistribution is needed */
+    // Later
+
+    
 
 }
 /*
@@ -2049,5 +2139,22 @@ void delete_entry(){
  * If success, return 0. Otherwise, return non-zero value.
  */
 int delete(int64_t key){
+    char key_value[120];
+    int64_t key_leaf_offset, rp_offset;
 
+    // Setting root page offset. (From header page)
+    fseeko(fp, default_offset+8, SEEK_SET);
+    fread(&rp_offset, 8, 1, fp);
+
+    memmove(key_value, find(key), 120);
+    key_leaf_offset = find_leaf_page(rp_offset, key);
+
+    /* Success */
+    if(key_value != NULL && key_leaf_offset != 0){
+        // Later
+        delete_entry();
+        return 0;
+    }
+    /* Fail */
+    return -1;
 }
