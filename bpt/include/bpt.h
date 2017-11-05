@@ -5,6 +5,7 @@
 // #define WINDOWS
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stdbool.h>
 // For usage of large file.
 #define _LARGEFILE_SOURCE
@@ -181,5 +182,36 @@ node * delete_tree( node * root, int key );
 
 void destroy_tree_nodes(node * root);
 node * destroy_tree(node * root);
+
+/* New functions */
+void init_page_list();
+int64_t scan_free_page();
+int64_t scan_use_page();
+void change_free_page(int64_t offset);
+void vacuum_using_page(int64_t offset);
+void init_header_page();
+void modify_header_page(int64_t rp_offset);
+int open_db(char *pathname);
+int64_t init_leaf_page(int64_t offset);
+int64_t init_internal_page(int64_t offset, int64_t p_offset);
+int get_left_offset(int64_t p_offset, int64_t l_offset);
+int64_t insert_into_leaf_page(int64_t leaf_offset, int64_t key, char *value);
+int64_t insert_into_leaf_page_after_splitting(int64_t rp_offset, int64_t leaf_offset, int64_t key, char *value);
+int64_t insert_into_internal_page(int64_t rp_offset, int64_t p_offset, int64_t left_offset, int64_t key, int64_t r_offset);
+int64_t insert_into_internal_page_after_splitting(int64_t rp_offset, int64_t old_offset, int left_offset, int64_t key, int64_t r_offset);
+int64_t insert_into_parent_page(int64_t rp_offset, int64_t l_offset, int64_t key, int64_t r_offset);
+int64_t insert_into_new_root_page(int64_t l_offset, int64_t key, int64_t r_offset);
+int64_t start_new_tree_page(int64_t key, char *value);
+int insert(int64_t key, char *value);
+int leaf_page_judge(int64_t offset);
+int64_t find_leaf_page(int64_t rp_offset, int64_t key);
+char * find(int64_t key);
+int get_neighbor_page_index(int64_t offset);
+int64_t remove_entry_from_page(int64_t offset, int64_t key, char *value, int64_t key_offset);
+int64_t adjust_root_page(int64_t rp_offset);
+int64_t coalesce_pages(int64_t rp_offset, int64_t offset, int64_t neighbor_offset, int neighbor_index, int64_t k_prime);
+int64_t redistribute_pages(int64_t rp_offset, int64_t offset, int64_t neighbor_offset, int neighbor_index, int k_prime_index, int64_t k_prime);
+int64_t delete_entry_from_page(int64_t rp_offset, int64_t offset, int64_t key, char *value, int64_t key_offset);
+int delete(int64_t key);
 
 #endif /* __BPT_H__*/
