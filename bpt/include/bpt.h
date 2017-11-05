@@ -46,7 +46,7 @@
  * of the value field.
  */
 typedef struct record {
-    char value[120];
+    int value;
 } record;
 
 /*
@@ -151,7 +151,7 @@ int cut( int length );
 
 // Insertion.
 
-record * make_record(char value[]);
+record * make_record(int value);
 node * make_node( void );
 node * make_leaf( void );
 int get_left_index(node * parent, node * left);
@@ -166,7 +166,7 @@ node * insert_into_node_after_splitting(node * root, node * parent,
 node * insert_into_parent(node * root, node * left, int key, node * right);
 node * insert_into_new_root(node * left, int key, node * right);
 node * start_new_tree(int key, record * pointer);
-node * insert_tree( node * root, int key, char value[] );
+node * insert_tree( node * root, int key, int value );
 
 // Deletion.
 
