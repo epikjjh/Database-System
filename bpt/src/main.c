@@ -5,9 +5,11 @@
 int main( int argc, char ** argv ) {
 
     char * input_file;
+    char value[120];
     FILE * fp;
     node * root;
-    int input, range2;
+    int range2;
+    int64_t input;
     char instruction;
     char license_part;
 
@@ -29,6 +31,8 @@ int main( int argc, char ** argv ) {
 
     if (argc > 2) {
         input_file = argv[2];
+        open_db(input_file);
+        /*
         fp = fopen(input_file, "r");
         if (fp == NULL) {
             perror("Failure  open input file.");
@@ -40,28 +44,50 @@ int main( int argc, char ** argv ) {
         }
         fclose(fp);
         print_tree(root);
+        */
     }
 
-    printf("> ");
+    printf("Hi\n");
+    //printf("> ");
     while (scanf("%c", &instruction) != EOF) {
         switch (instruction) {
         case 'd':
+            scanf("%" "l" "d", &input);
+            printf("Delete start\n");
+            delete(input);
+            printf("Delete done.\n");
+            /*
             scanf("%d", &input);
             root = delete_tree(root, input);
             print_tree(root);
+            */
             break;
         case 'i':
+            scanf("%" "l" "d", &input);
+            scanf("%s", value);
+            printf("Insert start\n");
+            insert(input, value);
+            printf("Insert done.\n");
+            /*
             scanf("%d", &input);
             root = insert_tree(root, input, input);
             print_tree(root);
+            */
             break;
         case 'f':
         case 'p':
+            scanf("%" "l" "d", &input);
+            printf("Find start.\n"); 
+            printf("%s", find(input));
+            printf("Find done.\n");
+            /*
             scanf("%d", &input);
             find_and_print(root, input, instruction == 'p');
+            */
             break;
         case 'r':
-            scanf("%d %d", &input, &range2);
+            scanf("%" "l" "d", &input);
+            scanf("%d", &range2);
             if (input > range2) {
                 int tmp = range2;
                 range2 = input;
@@ -92,7 +118,7 @@ int main( int argc, char ** argv ) {
             break;
         }
         while (getchar() != (int)'\n');
-        printf("> ");
+        //printf("> ");
     }
     printf("\n");
 

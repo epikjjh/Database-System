@@ -1361,7 +1361,7 @@ void init_header_page(){
 }
 void modify_header_page(int64_t rp_offset){
     int64_t fp_offset = scan_free_page();
-    int64_t pnum = scan_use_page();
+    int64_t pnum = scan_use_page() + 1;
 
     // Move file pointer to header page location.
     fseeko(fp, default_offset, SEEK_SET); 
@@ -1876,12 +1876,11 @@ int64_t start_new_tree_page(int64_t key, char *value){
  * If success, return 0. Otherwise, return non-zero value.
  */
 int insert(int64_t key, char *value){
-    record *pointer;
     int64_t rp_offset,lp_offset;
     int num_keys;
 
     // Setting root page offset.
-    fseeko(fp, default_offset+8, SEEK_SET); 
+    fseeko(fp, default_offset + 8, SEEK_SET); 
     fread(&rp_offset, 8, 1, fp);
 
     // Ignore duplicates.
@@ -1897,8 +1896,9 @@ int insert(int64_t key, char *value){
     if(rp_offset == 0){
         // Create new root page.
         rp_offset = start_new_tree_page(key, value);
-        // Modify header page.
-        modify_header_page(rp_offset);
+        // Modify header page. -> Already done.
+
+        return 0;
     }
     
     // Case : the tree already exists.
