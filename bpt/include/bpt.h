@@ -7,15 +7,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-// For usage of large file.
-#define _LARGEFILE_SOURCE
-#define _FILE_OFEESET_BITS 64
 #ifdef WINDOWS
 #define bool char
 #define false 0
 #define true 1
 #endif
 
+// For usage of large file.
+#define _LARGEFILE_SOURCE
+#define _FILE_OFFSET_BITS 64
 // Default order is 4.
 #define DEFAULT_ORDER 4
 

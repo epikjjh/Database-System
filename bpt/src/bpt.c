@@ -1897,6 +1897,8 @@ int insert(int64_t key, char *value){
         // Create new root page.
         rp_offset = start_new_tree_page(key, value);
         // Modify header page. -> Already done.
+        // Synchronize
+        fflush(fp);
 
         return 0;
     }
@@ -1917,7 +1919,6 @@ int insert(int64_t key, char *value){
         insert_into_leaf_page(lp_offset, key, value);
         // Synchronize
         fflush(fp);
-        fd = fileno(fp);
 
         return 0;
     }
@@ -1996,8 +1997,8 @@ char * find(int64_t key){
     value = (char*)malloc(120*sizeof(char));
 
     // Setting root page offset. (From header page)
-    fseeko(fp, default_offset+8, SEEK_SET);
-    fread(&rp_offset, 8, 1, fp);
+    fseeko(fp, default_offset + 8, SEEK_SET);
+    fread(&rp_offset, 8, 1, fp);    
 
     // Setting leaf page offset.
     lp_offset = find_leaf_page(rp_offset, key);
@@ -2679,7 +2680,6 @@ int delete(int64_t key){
         delete_entry_from_page(rp_offset, key_leaf_offset, key, key_value, 0);
         // Synchronize
         fflush(fp);
-        fd = fileno(fp);
         return 0;
     }
     /* Fail */
