@@ -25,9 +25,13 @@ int main( int argc, char ** argv ) {
         }
     }
 
+    setvbuf(stdin, NULL, _IONBF, 0);
+    setvbuf(stdout, NULL, _IONBF, 0);
+    /*
     license_notice();
     usage_1();  
     usage_2();
+    */
 
     if (argc > 2) {
         input_file = argv[2];
@@ -47,15 +51,12 @@ int main( int argc, char ** argv ) {
         */
     }
 
-    printf("Hi\n");
     //printf("> ");
     while (scanf("%c", &instruction) != EOF) {
         switch (instruction) {
         case 'd':
             scanf("%" "l" "d", &input);
-            printf("Delete start\n");
             delete(input);
-            printf("Delete done.\n");
             /*
             scanf("%d", &input);
             root = delete_tree(root, input);
@@ -65,9 +66,7 @@ int main( int argc, char ** argv ) {
         case 'i':
             scanf("%" "l" "d", &input);
             scanf("%s", value);
-            printf("Insert start\n");
             insert(input, value);
-            printf("Insert done.\n");
             /*
             scanf("%d", &input);
             root = insert_tree(root, input, input);
@@ -77,10 +76,12 @@ int main( int argc, char ** argv ) {
         case 'f':
         case 'p':
             scanf("%" "l" "d", &input);
-            printf("Find start.\n"); 
-            if(find(input) != NULL)
-                printf("%s\n", find(input));
-            printf("Find done.\n");
+            if(find(input) == NULL){
+                printf("Not Exists");
+            }
+            else{
+                printf("Key: %" "l" "d" ", Value: %s", input, find(input));
+            }
             /*
             scanf("%d", &input);
             find_and_print(root, input, instruction == 'p');
@@ -115,13 +116,15 @@ int main( int argc, char ** argv ) {
             print_tree(root);
             break;
         default:
+            /*
             usage_2();
+            */
             break;
         }
         while (getchar() != (int)'\n');
         //printf("> ");
     }
-    printf("\n");
+    //printf("\n");
 
     return EXIT_SUCCESS;
 }

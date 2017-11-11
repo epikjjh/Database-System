@@ -1482,11 +1482,11 @@ int64_t insert_into_leaf_page(int64_t leaf_offset, int64_t key, char *value){
 
     // Move existing memory.
     for(i = num_keys; i > insertion_point; i--){
-        fseeko(fp, default_offset + leaf_offset + 128 + i*128, SEEK_SET);
+        fseeko(fp, default_offset + leaf_offset + 128 + (i-1)*128, SEEK_SET);
         fread(&temp_key, 8, 1, fp);
         fread(&temp_value, 1, 120, fp);
 
-        fseeko(fp, default_offset + leaf_offset + 128 + (i+1)*128, SEEK_SET);
+        fseeko(fp, default_offset + leaf_offset + 128 + (i)*128, SEEK_SET);
         fwrite(&temp_key, 8, 1, fp);
         fwrite(&temp_value, 1, 120, fp);
     }
@@ -1505,13 +1505,13 @@ int64_t insert_into_leaf_page(int64_t leaf_offset, int64_t key, char *value){
 }
 int64_t insert_into_leaf_page_after_splitting(int64_t rp_offset, int64_t leaf_offset, int64_t key, char *value){
     int64_t new_leaf_offset, *temp_keys, target_key, new_key, new_rs_offset = 0, p_offset;
-    int insertion_index, split, i, j, num_keys, new_num_keys;
+    int insertion_index, split, i, j, num_keys, new_num_keys = 0,zero = 0;
     char **temp_values;
-    char zero[120];
+    char zero_v[120];
 
     // Initialize zero.
     for(i = 0; i < 120; i++){
-        zero[i] = 0;
+        zero_v[i] = 0;
     }
 
     // Make new leaf page.
@@ -1575,7 +1575,7 @@ int64_t insert_into_leaf_page_after_splitting(int64_t rp_offset, int64_t leaf_of
     fseeko(fp, default_offset + leaf_offset + 12, SEEK_SET);
     fwrite(&num_keys, 4, 1, fp);
 
-    for(i = split, j = 0; i < order; i++, j++){
+    for(i = split, j = 0; i < leaf_order; i++, j++){
         fseeko(fp, default_offset + new_leaf_offset + 128 + 128*j, SEEK_SET);
         fwrite((temp_keys+i), 8, 1, fp);
         fwrite(*(temp_values+i), 1, 120, fp);
@@ -1601,13 +1601,15 @@ int64_t insert_into_leaf_page_after_splitting(int64_t rp_offset, int64_t leaf_of
     fwrite(&new_rs_offset, 8, 1, fp);
 
     // Reinitialize value which is not used.
-    for(i = num_keys; i < leaf_order -1; i++){
-        fseeko(fp, default_offset + leaf_offset + 128 + 128*i + 8, SEEK_SET);
-        fwrite(zero, 1, 120, fp);
+    for(i = num_keys; i < leaf_order - 1; i++){
+        fseeko(fp, default_offset + leaf_offset + 128 + 128*i, SEEK_SET);
+        fwrite(&zero, 8, 1, fp);
+        fwrite(zero_v, 1, 120, fp);
     }
-    for(i = new_num_keys; i < leaf_order -1; i++){
-        fseeko(fp, default_offset + new_leaf_offset + 128 + 128*i + 8, SEEK_SET);
-        fwrite(zero, 1, 120, fp);
+    for(i = new_num_keys; i < leaf_order - 1; i++){
+        fseeko(fp, default_offset + new_leaf_offset + 128 + 128*i, SEEK_SET);
+        fwrite(&zero, 8, 1, fp);
+        fwrite(zero_v, 1, 120, fp);
     }
 
     /* Setting parent & new key. */
@@ -1771,7 +1773,7 @@ int64_t insert_into_internal_page_after_splitting(int64_t rp_offset, int64_t old
         fwrite(&new_internal_offset, 8, 1, fp);
     }
 
-    // Return -> Later
+    // Return
     return insert_into_parent_page(rp_offset, old_offset, k_prime, new_internal_offset);
 }
 int64_t insert_into_parent_page(int64_t rp_offset, int64_t l_offset, int64_t key, int64_t r_offset){
@@ -1784,9 +1786,9 @@ int64_t insert_into_parent_page(int64_t rp_offset, int64_t l_offset, int64_t key
 
     /* Case : new root. */
 
-    if(p_offset == 0)
+    if(p_offset == 0){
         return insert_into_new_root_page(l_offset, key, r_offset);
-
+    }
     /* Case : leaf of node. (Remainder of function body.) */
 
     // Find the parent page's offset to the left page.
@@ -1801,13 +1803,14 @@ int64_t insert_into_parent_page(int64_t rp_offset, int64_t l_offset, int64_t key
         return insert_into_internal_page(rp_offset, p_offset, left_offset, key, r_offset);
         
     /* Harder case : split a page in order to preserve the B+ tree properties. */
-    // Return -> Later
+    // Return
     return insert_into_internal_page_after_splitting(rp_offset, p_offset, left_offset, key, r_offset);
 }
 int64_t insert_into_new_root_page(int64_t l_offset, int64_t key, int64_t r_offset){
     int64_t new_rp_offset = scan_free_page();
     int64_t p_offset = 0; 
     int is_leaf = 0, num_keys = 1;
+
 
     // After using free page, change free page which is used and modify header page.
     change_free_page(new_rp_offset);
@@ -1820,10 +1823,13 @@ int64_t insert_into_new_root_page(int64_t l_offset, int64_t key, int64_t r_offse
     fwrite(&is_leaf, 4, 1, fp);
     fwrite(&num_keys, 4, 1, fp);
 
-    // Move file pointer & write key + value.
+    /* Move file pointer & write offset. */
     fseeko(fp, default_offset + new_rp_offset + 120, SEEK_SET);
     // Insert left page offset.
     fwrite(&l_offset, 8, 1, fp);
+
+    /* Move file pointer & write key + offset. */
+    fseeko(fp, default_offset + new_rp_offset + 128, SEEK_SET);
     // Insert key.
     fwrite(&key, 8, 1, fp);
     // Insert right page offset.
@@ -1927,7 +1933,6 @@ int insert(int64_t key, char *value){
     insert_into_leaf_page_after_splitting(rp_offset, lp_offset, key, value);
     // Synchronize
     fflush(fp);
-    fd = fileno(fp);
     return 0;
 }
 
@@ -1940,7 +1945,7 @@ int leaf_page_judge(int64_t offset){
     int is_leaf;
 
     // Read is leaf value.
-    fseeko(fp, default_offset+8, SEEK_SET); 
+    fseeko(fp, default_offset+offset+8, SEEK_SET); 
     fread(&is_leaf, 4, 1, fp);
 
     if(is_leaf)
@@ -1953,9 +1958,9 @@ int leaf_page_judge(int64_t offset){
  *
  */
 int64_t find_leaf_page(int64_t rp_offset, int64_t key){
-    int64_t offset = rp_offset, target_key;
+    int64_t offset = rp_offset, target_key, temp;
     int num_keys,i = 0;
-     
+
     // Empty tree.
     if(offset == 0){
         return offset;
@@ -1977,8 +1982,15 @@ int64_t find_leaf_page(int64_t rp_offset, int64_t key){
                 break;
         }
         // Change offset.
-        fseeko(fp, default_offset+offset+128+(16*i)+8, SEEK_SET);
-        fread(&offset, 8, 1, fp);
+        if(i==0){
+            fseeko(fp, default_offset+offset+120, SEEK_SET);
+            fread(&temp, 8, 1, fp);
+        }
+        else{
+            fseeko(fp, default_offset+offset+128+(16*(i-1))+8, SEEK_SET);
+            fread(&temp, 8, 1, fp);
+        }
+        offset = temp;
     }
 
     return offset;
