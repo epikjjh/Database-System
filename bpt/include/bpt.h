@@ -5,6 +5,7 @@
 // #define WINDOWS
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <stdbool.h>
 #ifdef WINDOWS
@@ -14,11 +15,9 @@
 #endif
 
 // For usage of large file.
-/*
 #define _LARGEFILE_SOURCE
 #define _LARGEFILE64_SOURCE
 #define _FILE_OFFSET_BITS 64
-*/
 // Default order is 4.
 #define DEFAULT_ORDER 4
 

@@ -78,7 +78,8 @@ int main( int argc, char ** argv ) {
         case 'p':
             scanf("%" "l" "d", &input);
             printf("Find start.\n"); 
-            printf("%s", find(input));
+            if(find(input) != NULL)
+                printf("%s\n", find(input));
             printf("Find done.\n");
             /*
             scanf("%d", &input);
