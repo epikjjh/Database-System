@@ -2353,9 +2353,12 @@ int64_t coalesce_pages(int64_t rp_offset, int64_t offset, int64_t neighbor_offse
 
             // Modify page header.
             fseeko(fp, default_offset + temp_offset, SEEK_SET);
-            fwrite(&temp_offset, 8, 1, fp);
+            fwrite(&neighbor_offset, 8, 1, fp);
         }
         // Modify number of keys.
+        fseeko(fp, default_offset + offset + 12, SEEK_SET);
+        fwrite(&num_keys, 4, 1, fp);
+
         fseeko(fp, default_offset + neighbor_offset + 12, SEEK_SET);
         fwrite(&neighbor_num_keys, 4, 1, fp);
     }
