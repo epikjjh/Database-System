@@ -88,7 +88,6 @@ bool verbose_output = false;
  * It opens existing data file or create on if not existed. 
  */
 FILE *fp; 
-int fd;
 
 /*
  * In case of existing file.
@@ -1505,7 +1504,7 @@ int64_t insert_into_leaf_page(int64_t leaf_offset, int64_t key, char *value){
     return leaf_offset;
 }
 int64_t insert_into_leaf_page_after_splitting(int64_t rp_offset, int64_t leaf_offset, int64_t key, char *value){
-    int64_t new_leaf_offset, *temp_keys, target_key, new_key, new_rs_offset = 0, p_offset;
+    int64_t new_leaf_offset, *temp_keys, target_key, new_key, temp_offset = 0, p_offset;
     int insertion_index, split, i, j, num_keys, new_num_keys = 0,zero = 0;
     char **temp_values;
     char zero_v[120];
@@ -1596,10 +1595,13 @@ int64_t insert_into_leaf_page_after_splitting(int64_t rp_offset, int64_t leaf_of
     /* Change right sibiling offset. */
     // Setting right sibiling offset. : leaf page & new leaf page
     fseeko(fp, default_offset + leaf_offset + 120, SEEK_SET);
-    fwrite(&new_leaf_offset, 8, 1, fp);
+    fread(&temp_offset, 8, 1, fp);
 
     fseeko(fp, default_offset + new_leaf_offset + 120, SEEK_SET);
-    fwrite(&new_rs_offset, 8, 1, fp);
+    fwrite(&temp_offset, 8, 1, fp);
+
+    fseeko(fp, default_offset + leaf_offset + 120, SEEK_SET);
+    fwrite(&new_leaf_offset, 8, 1, fp);
 
     // Reinitialize value which is not used.
     for(i = num_keys; i < leaf_order - 1; i++){
@@ -1635,20 +1637,29 @@ int64_t insert_into_internal_page(int64_t rp_offset, int64_t p_offset, int64_t l
     fread(&num_keys, 4, 1, fp);
 
     // Move existing memory.
-    // Case1 : left offset is 0. & Case2 : left offset is not 0.
-    if(left_offset != 0){
-        for(i = num_keys; i > (left_offset-1); i--){
-            fseeko(fp, default_offset + p_offset + 128 + i*16, SEEK_SET);
-            fread(&temp_key, 8, 1, fp);
-            fread(&temp_offset, 8, 1, fp);
+    for(i = num_keys; i > left_offset; i--){
+        // Key
+        fseeko(fp, default_offset + p_offset + 128 + (i-1)*16, SEEK_SET);
+        fread(&temp_key, 8, 1, fp);
 
-            fseeko(fp, default_offset + p_offset + 128 + (i+1)*16, SEEK_SET);
-            fwrite(&temp_key, 8, 1, fp);
+        fseeko(fp, default_offset + p_offset + 128 + i*16, SEEK_SET);
+        fwrite(&temp_key, 8, 1, fp);
+
+        // Offset
+        if(i == 0){
+            fseeko(fp, default_offset + p_offset + 120, SEEK_SET);
+            fread(&temp_offset, 8, 1, fp);
+            fseeko(fp, default_offset + p_offset + 128 + 8, SEEK_SET);
+            fwrite(&temp_offset, 8, 1, fp);
+        }
+        else{
+            fseeko(fp, default_offset + p_offset + 128 + (i-1)*16 + 8, SEEK_SET );
+            fread(&temp_offset, 8, 1, fp);
+            fseeko(fp, default_offset + p_offset + 128 + i*16 + 8, SEEK_SET);
             fwrite(&temp_offset, 8, 1, fp);
         }
     }
     // Write new key & offset.
-    // Case1 : left offset is 0. & Case2 : left offset is not 0.
     fseeko(fp, default_offset + p_offset + 128 + (left_offset)*16, SEEK_SET);
     fwrite(&key, 8, 1, fp);
     fwrite(&r_offset, 8, 1, fp);
@@ -1711,6 +1722,8 @@ int64_t insert_into_internal_page_after_splitting(int64_t rp_offset, int64_t old
     fseeko(fp, default_offset + new_internal_offset + 12, SEEK_SET);
     fread(&new_num_keys, 4, 1, fp);
 
+    old_num_keys = 0;
+
     for(i = 0; i < split - 1; i++){
         if(i == 0){
             fseeko(fp, default_offset + old_offset + 120, SEEK_SET);
@@ -1721,7 +1734,7 @@ int64_t insert_into_internal_page_after_splitting(int64_t rp_offset, int64_t old
         else{
             fseeko(fp, default_offset + old_offset + 128 + 16*(i-1) + 8, SEEK_SET);    
             fwrite((temp_offsets + i), 8, 1, fp);
-            fseeko(fp, default_offset + old_offset + 128 + 16*(i-1), SEEK_SET);
+            fseeko(fp, default_offset + old_offset + 128 + 16*(i), SEEK_SET);
             fwrite((temp_keys + i), 8, 1, fp);
         }
         old_num_keys++;
@@ -1740,10 +1753,10 @@ int64_t insert_into_internal_page_after_splitting(int64_t rp_offset, int64_t old
         else{
             fseeko(fp, default_offset + new_internal_offset + 128 + 16*(j-1) + 8, SEEK_SET);
             fwrite((temp_offsets + i), 8, 1, fp);
-            fseeko(fp, default_offset + new_internal_offset + 128 + 16*(j-1), SEEK_SET);
+            fseeko(fp, default_offset + new_internal_offset + 128 + 16*(j), SEEK_SET);
             fwrite((temp_keys + i), 8, 1, fp);
         }
-        new_num_keys;
+        new_num_keys++;
     }
     fseeko(fp, default_offset + new_internal_offset + 128 + 16*(j-1) + 8, SEEK_SET);
     fwrite((temp_offsets + i), 8, 1, fp);
