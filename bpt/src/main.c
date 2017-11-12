@@ -77,10 +77,10 @@ int main( int argc, char ** argv ) {
         case 'p':
             scanf("%" "l" "d", &input);
             if(find(input) == NULL){
-                printf("Not Exists");
+                printf("Not Exists\n");
             }
             else{
-                printf("Key: %" "l" "d" ", Value: %s", input, find(input));
+                printf("Key: %" "l" "d" ", Value: %s\n", input, find(input));
             }
             /*
             scanf("%d", &input);

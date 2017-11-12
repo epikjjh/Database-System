@@ -2138,7 +2138,7 @@ int64_t remove_entry_from_page(int64_t offset, int64_t key, char *value, int64_t
         }
     }
 
-    /* Remove the offset or value and shift otehr offsets or values accordingly. */
+    /* Remove the offset or value and shift other offsets or values accordingly. */
     // First determine number of offsets or values.
     num_off_values = is_leaf ? num_keys : num_keys + 1; 
     i = 0;
@@ -2164,11 +2164,11 @@ int64_t remove_entry_from_page(int64_t offset, int64_t key, char *value, int64_t
     // Case 2 : internal page
     else{
         // Setting target offset
-        fseeko(fp, default_offset + offset + 128 + 16*i + 8, SEEK_SET);
+        fseeko(fp, default_offset + offset + 120, SEEK_SET);
         fread(&target_offset, 8, 1, fp);
         while(key_offset != target_offset){
             i++;
-            fseeko(fp, default_offset + offset + 128 + 16*i + 8, SEEK_SET);
+            fseeko(fp, default_offset + offset + 128 + 16*(i-1) + 8, SEEK_SET);
             fread(&target_offset, 8, 1, fp);
         }
         for(++i; i < num_off_values; i++){
@@ -2252,7 +2252,7 @@ int64_t adjust_root_page(int64_t rp_offset){
     return new_rp_offset;
 }
 int64_t coalesce_pages(int64_t rp_offset, int64_t offset, int64_t neighbor_offset, int neighbor_index, int64_t k_prime){
-    int i, j, neighbor_insertion_index, offset_end, is_leaf, num_keys, neighbor_num_keys;
+    int i, j, neighbor_insertion_index, offset_end, is_leaf, num_keys = 0, neighbor_num_keys = 0;
     int64_t temp_key, temp_offset, p_offset;
     char temp_value[120];
     char zero[4096];
@@ -2341,6 +2341,9 @@ int64_t coalesce_pages(int64_t rp_offset, int64_t offset, int64_t neighbor_offse
             fseeko(fp, default_offset + temp_offset, SEEK_SET);
             fwrite(&temp_offset, 8, 1, fp);
         }
+        // Modify number of keys.
+        fseeko(fp, default_offset + neighbor_offset + 12, SEEK_SET);
+        fwrite(&neighbor_num_keys, 4, 1, fp);
     }
     /* Case : leaf page */
     else{
@@ -2354,12 +2357,19 @@ int64_t coalesce_pages(int64_t rp_offset, int64_t offset, int64_t neighbor_offse
             fseeko(fp, default_offset + neighbor_offset + 128 + i*128, SEEK_SET);
             fwrite(&temp_key, 8, 1, fp);
             fwrite(temp_value, 1, 120 , fp);
+
+            // Increase number of keys.
+            neighbor_num_keys++;
         }
         /* Setting right sibiling page offset. */
         fseeko(fp, default_offset + offset + 120, SEEK_SET);
         fread(&temp_offset, 8, 1, fp);
         fseeko(fp, default_offset + neighbor_offset + 120, SEEK_SET);
         fwrite(&temp_offset, 8, 1, fp);
+
+        // Modify number of keys.
+        fseeko(fp, default_offset + neighbor_offset + 12, SEEK_SET);
+        fwrite(&neighbor_num_keys, 4, 1, fp);
     }
     // Setting parent offset : Offset page.
     fseeko(fp, default_offset + offset, SEEK_SET);
@@ -2450,7 +2460,7 @@ int64_t redistribute_pages(int64_t rp_offset, int64_t offset, int64_t neighbor_o
             fread(&p_offset, 8, 1, fp);
 
             // Read from neighbor page.
-            fseeko(fp, default_offset + neighbor_offset + 128 + 16*(neighbor_num_keys), SEEK_SET);
+            fseeko(fp, default_offset + neighbor_offset + 128 + 16*(neighbor_num_keys-1), SEEK_SET);
             fread(&temp_key, 8, 1, fp);
 
             // Write to offset page's parent page.
@@ -2604,7 +2614,7 @@ int64_t redistribute_pages(int64_t rp_offset, int64_t offset, int64_t neighbor_o
     return rp_offset;
 }
 int64_t delete_entry_from_page(int64_t rp_offset, int64_t offset, int64_t key, char *value, int64_t key_offset){
-    int min_keys, is_leaf, num_keys, neighbor_num_keys ,k_prime_index, neighbor_index, capacity;
+    int min_keys = 0, is_leaf = 0, num_keys = 0, neighbor_num_keys = 0, k_prime_index = 0, neighbor_index = 0, capacity = 0;
     int64_t k_prime, neighbor_offset, p_offset;
 
     // Remove key and page offset from page.
@@ -2660,19 +2670,21 @@ int64_t delete_entry_from_page(int64_t rp_offset, int64_t offset, int64_t key, c
             fread(&neighbor_offset, 8, 1, fp);
         }
     }
-    
+    // Setting number of keys : neighbor
+    fseeko(fp, default_offset + neighbor_offset + 12, SEEK_SET);
+    fread(&neighbor_num_keys, 4, 1, fp);
+
     // Setting capacity
     capacity = is_leaf ? leaf_order : internal_order - 1;
 
-    // Setting number of keys. : Neighbor page
-
-    /* Coalescence. */ // Later
-    if(neighbor_num_keys + num_keys < capacity)
+    /* Coalescence. */
+    if(neighbor_num_keys + num_keys < capacity){
         return coalesce_pages(rp_offset, offset, neighbor_offset, neighbor_index, k_prime);
-
+    }
     /* Redistribution. */  // Later
-    else
+    else{
         return redistribute_pages(rp_offset, offset, neighbor_offset, neighbor_index, k_prime_index, k_prime);
+    }
 }
 /*
  * Find the matching record and delete it if found.
