@@ -1384,6 +1384,7 @@ int open_db(char *pathname){
     }
     // Calculating default offset.
     // ftello function uses off_t type.
+    fseeko(fp, 0, SEEK_END);
     default_offset = ftello(fp);
 
     // Initialize page list.
@@ -2681,7 +2682,7 @@ int64_t delete_entry_from_page(int64_t rp_offset, int64_t offset, int64_t key, c
     if(neighbor_num_keys + num_keys < capacity){
         return coalesce_pages(rp_offset, offset, neighbor_offset, neighbor_index, k_prime);
     }
-    /* Redistribution. */  // Later
+    /* Redistribution. */
     else{
         return redistribute_pages(rp_offset, offset, neighbor_offset, neighbor_index, k_prime_index, k_prime);
     }
