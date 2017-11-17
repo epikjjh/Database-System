@@ -74,4 +74,3 @@ void flush_page(Page* page) {
     lseek(dbfile, page->file_offset, SEEK_SET);
     write(dbfile, page, PAGE_SIZE);
 }
-

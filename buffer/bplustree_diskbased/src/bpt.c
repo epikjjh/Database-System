@@ -111,6 +111,9 @@ int order_leaf = BPTREE_LEAF_ORDER;
  */
 bool verbose_output = false;
 
+/* Project Buffer : GLOBALS */
+Buffer buf_mgr;
+
 // FUNCTION PROTOTYPES.
 
 // Output and utility.
@@ -230,7 +233,7 @@ void usage_2( void ) {
 }
 
 // Open a db file. Create a file if not exist.
-int open_db(const char* filename) {
+int open_table(const char* filename) {
     dbfile = open(filename, O_RDWR);
     if (dbfile < 0) {
         // Create a new db file
@@ -1265,3 +1268,9 @@ int delete(uint64_t key) {
     return 0;
 }
 
+/* Project Buffer */
+int init_db(int num_buf);
+
+int close_table(int table_id);
+
+int shutdown_db();

@@ -1,8 +1,8 @@
 #include <stddef.h>
 #include <inttypes.h>
 
-#define BPTREE_INTERNAL_ORDER       4//249
-#define BPTREE_LEAF_ORDER           4//32
+#define BPTREE_INTERNAL_ORDER       249 //4
+#define BPTREE_LEAF_ORDER           32  //4
 
 #define PAGE_SIZE                   4096
 
@@ -108,7 +108,7 @@ typedef struct _NodePage {
 } NodePage;
 
 // Open a db file. Create a file if not exist.
-int open_db(const char* filename);
+int open_table(const char* filename);
 
 // Close a db file
 void close_db();
@@ -130,3 +130,19 @@ void flush_page(Page* page);
 
 extern HeaderPage dbheader;
 
+/* Project buffer */
+// LRU clock structure
+typedef struct _LRU_clock{
+    int clock_hand;
+    int reference_bits; 
+} LRU_clock;
+
+// Buffer structure
+typedef struct _Buffer{
+    Page *frame;
+    int table_id;
+    off_t page_offset;
+    int is_dirty;
+    int pin_count;
+    LRU_clock control;
+} Buffer;
