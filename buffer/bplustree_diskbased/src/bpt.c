@@ -88,8 +88,9 @@
 #define LICENSE_CONDITIONS_END 625
 
 // GLOBALS.
-extern HeaderPage dbheader;
-extern int dbfile;
+extern HeaderPage dbheader[10];
+extern int dbfile[10];
+int table_ids[10] = {0,};
 
 /* The order determines the maximum and minimum
  * number of entries (keys and pointers) in any
@@ -112,7 +113,8 @@ int order_leaf = BPTREE_LEAF_ORDER;
 bool verbose_output = false;
 
 /* Project Buffer : GLOBALS */
-Buffer buf_mgr;
+Buffer *buf_mgr;
+int buf_size = -1;
 
 // FUNCTION PROTOTYPES.
 
@@ -234,32 +236,46 @@ void usage_2( void ) {
 
 // Open a db file. Create a file if not exist.
 int open_table(const char* filename) {
-    dbfile = open(filename, O_RDWR);
-    if (dbfile < 0) {
+    int i;
+
+    // Table capacitance check.
+    for(i = 0; i < 10; i++){
+        if(table_ids[i] == 0)
+            break;
+    }
+
+    // Over table. ( MAX : 10 )
+    if(i == 10){
+        return -1;
+    }
+
+    dbfile[i] = open(filename, O_RDWR);
+    if (dbfile[i] < 0) {
         // Create a new db file
-        dbfile = open(filename, O_CREAT|O_RDWR, S_IRUSR|S_IWUSR);
-        if (dbfile < 0) {
+        dbfile[i] = open(filename, O_CREAT|O_RDWR, S_IRUSR|S_IWUSR);
+        if (dbfile[i] < 0) {
             assert("failed to create new db file");
             return -1;
         }
         
-        memset(&dbheader, 0, PAGE_SIZE);
-        dbheader.freelist = 0;
-        dbheader.root_offset = 0;
-        dbheader.num_pages = 1;
-        dbheader.file_offset = 0;
-        flush_page((Page*)&dbheader);
+        memset((dbheader+i), 0, PAGE_SIZE);
+        dbheader[i].freelist = 0;
+        dbheader[i].root_offset = 0;
+        dbheader[i].num_pages = 1;
+        dbheader[i].file_offset = 0;
+        flush_page((Page*)(dbheader+i));
     } else {
         // DB file exist. Load header info
-        load_page(0, (Page*)&dbheader);
-        dbheader.file_offset = 0;
+        load_page(0, (Page*)(dbheader+i));
+        dbheader[i].file_offset = 0;
     }
 
-    return 0;
+    return i+1;
 }
 
+// Not used in project buffer : Replaced by close_table function
 void close_db() {
-    close(dbfile);
+    close(dbfile[i]);
 }
 
 /* Helper function for printing the
@@ -382,7 +398,7 @@ bool find_leaf(uint64_t key, LeafPage* out_leaf_node) {
  * a key refers.
  */
 // If you want to return a record, use 3rd parameter
-char* find(uint64_t key) {
+char* find(int table_id, uint64_t key) {
     int i = 0;
     char* out_value;
 
@@ -746,7 +762,7 @@ void start_new_tree(uint64_t key, const char* value) {
  * however necessary to maintain the B+ tree
  * properties.
  */
-int insert(uint64_t key, const char* value) {
+int insert(int table_id, uint64_t key, const char* value) {
     /* The current implementation ignores
 	 * duplicates.
 	 */
@@ -1251,7 +1267,7 @@ void delete_entry(NodePage* node_page, uint64_t key) {
 
 /* Master deletion function.
  */
-int delete(uint64_t key) {
+int delete(int table_id, uint64_t key) {
 
     char* value_found = NULL;
     if ((value_found = find(key)) == 0) {
@@ -1269,8 +1285,63 @@ int delete(uint64_t key) {
 }
 
 /* Project Buffer */
-int init_db(int num_buf);
+int init_db(int num_buf){
+    // Auto intialize
+    buf_mgr = (Buffer *)calloc(num_buf, sizeof(Buffer)); 
 
-int close_table(int table_id);
+    if(buf_mgr == NULL){
+        // Fail
+        return -1;
+    }
 
-int shutdown_db();
+    // Success
+    buf_size = num_buf;
+
+    return 0;
+}
+
+int close_table(int table_id){
+    int i;
+
+    // Failure case
+    if(table_id < 1 || table_id > 10 || buf_size == -1 || buf_mgr == NULL){
+        return -1;
+    }
+
+    for(i = 0; i < buf_size; i++){
+        if(buf_mgr[i].table_id == table_id){
+            // If dirty bit is on, write page.
+            if(buf_mgr[i].is_dirty == 1){
+                flush_page(buf_mgr[i].frame);
+            }
+            // Reinitialize : Evict
+            memset(buf_mgr+i, 0, sizeof(Buffer));
+        }
+    }
+
+    // Discard the table id.
+    table_ids[table_id -1] = 0;
+
+    return 0;
+}
+
+int shutdown_db(){
+    int i;
+
+    // Failure case
+    if(buf_size == -1 || buf_mgr == NULL){
+        return -1;
+    }
+
+    for(i = 0; i < buf_size; i++){
+        // If dirty bit is on, write page.
+        if(buf_mgr[i].is_dirty == 1){
+            flush_page(buf_mgr[i].frame);
+        }
+    }
+
+    // Destroy allocated buffer
+    free(buf_mgr);
+
+    return 0;
+}

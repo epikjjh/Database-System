@@ -1,4 +1,4 @@
-cscope 15 $HOME/mysql/Lab/buffer/bplustree_diskbased -q 0000000221 0000030292
+cscope 15 $HOME/mysql/Lab/buffer/bplustree_diskbased -q 0000000225 0000031423
 	@include/bpt.h
 
 1 #i‚de‡
@@ -19,7 +19,9 @@ fûíame
 
 5 * 
 föd
-(
+(
+èbÀ_id
+, 
 uöt64_t
  
 key
@@ -27,7 +29,9 @@ key
 
 6 
 ö£π
-(
+(
+èbÀ_id
+, 
 uöt64_t
  
 key
@@ -37,7 +41,9 @@ vÆue
 
 7 
 dñëe
-(
+(
+èbÀ_id
+, 
 uöt64_t
  
 key
@@ -45,6 +51,22 @@ key
 
 9 
 ¥öt_åì
+();
+
+13 
+öô_db
+(
+num_buf
+);
+
+15 
+˛o£_èbÀ
+(
+èbÀ_id
+);
+
+17 
+shutdown_db
 ();
 
 	@include/file.h
@@ -473,7 +495,7 @@ Page
 HódîPage
  
 dbhódî
-;
+[10];
 
 135 
 	s_LRU_˛ock
@@ -528,22 +550,6 @@ LRU_˛ock
 148 } 
 	tBuf„r
 ;
-
-151 
-öô_db
-(
-num_buf
-);
-
-153 
-˛o£_èbÀ
-(
-èbÀ_id
-);
-
-155 
-shutdown_db
-();
 
 	@src/bpt.c
 
@@ -677,25 +683,29 @@ WINDOWS
 HódîPage
  
 dbhódî
-;
+[10];
 
 92 
 dbfûe
-;
+[10];
 
-104 
+93 
+	gèbÀ_ids
+[10] = {0,};
+
+105 
 	g‹dî_öã∫Æ
  = 
 BPTREE_INTERNAL_ORDER
 ;
 
-105 
+106 
 	g‹dî_Àaf
  = 
 BPTREE_LEAF_ORDER
 ;
 
-112 
+113 
 boﬁ
  
 	gvîbo£_ouçut
@@ -703,25 +713,35 @@ boﬁ
 Ál£
 ;
 
-118 
+116 
+Buf„r
+ *
+	gbuf_mgr
+;
+
+117 
+	gbuf_size
+ = -1;
+
+123 
 li˚n£_nŸi˚
 ( );
 
-119 
+124 
 ¥öt_li˚n£
 –
 li˚n˚_∑π
  );
 
-120 
+125 
 ußge_1
 ( );
 
-121 
+126 
 ußge_2
 ( );
 
-122 
+127 
 föd_™d_¥öt
 (
 uöt64_t
@@ -729,7 +749,7 @@ uöt64_t
 key
 );
 
-123 
+128 
 boﬁ
  
 föd_Àaf
@@ -743,7 +763,7 @@ LófPage
 out_Àaf_node
 );
 
-126 
+131 
 °¨t_√w_åì
 (
 uöt64_t
@@ -753,7 +773,7 @@ key
 vÆue
 );
 
-127 
+132 
 ö£π_öto_Àaf
 (
 LófPage
@@ -767,7 +787,7 @@ key
 vÆue
 );
 
-128 
+133 
 ö£π_öto_Àaf_a·î_•lôtög
 (
 LófPage
@@ -781,7 +801,7 @@ key
 vÆue
 );
 
-129 
+134 
 ö£π_öto_∑ª¡
 (
 NodePage
@@ -795,7 +815,7 @@ key
 right
 );
 
-130 
+135 
 ö£π_öto_√w_roŸ
 (
 NodePage
@@ -809,7 +829,7 @@ key
 right
 );
 
-131 
+136 
 gë_À·_ödex
 (
 I¡î«lPage
@@ -821,7 +841,7 @@ off_t
 À·_off£t
 );
 
-132 
+137 
 ö£π_öto_node
 (
 I¡î«lPage
@@ -839,7 +859,7 @@ off_t
 right_off£t
 );
 
-133 
+138 
 ö£π_öto_node_a·î_•lôtög
 (
 I¡î«lPage
@@ -857,7 +877,7 @@ off_t
 right_off£t
 );
 
-136 
+141 
 gë_√ighb‹_ödex
 (
 NodePage
@@ -865,11 +885,11 @@ NodePage
 node_∑ge
 );
 
-137 
+142 
 adju°_roŸ
 ();
 
-138 
+143 
 cﬂÀs˚_nodes
 (
 NodePage
@@ -879,13 +899,13 @@ node_∑ge
 √ighb‹_∑ge
 ,
 
-139 
+144 
 √ighb‹_ödex
 , 
 k_¥ime
 );
 
-140 
+145 
 ªdi°ribuã_nodes
 (
 NodePage
@@ -895,17 +915,17 @@ node_∑ge
 √ighb‹_∑ge
 ,
 
-141 
+146 
 √ighb‹_ödex
 ,
 
-142 
+147 
 k_¥ime_ödex
 , 
 k_¥ime
 );
 
-143 
+148 
 dñëe_íåy
 (
 NodePage
@@ -917,33 +937,33 @@ uöt64_t
 key
 );
 
-152 
+157 
 	$li˚n£_nŸi˚
 ( ) {
 
-153 
+158 
 	`¥ötf
 ("bpt version %s -- Copyright (C) 2010 Amittai Aviram "
 
-154 "hâp://www.amôèi.com\n", 
+159 "hâp://www.amôèi.com\n", 
 Vîsi⁄
 );
 
-155 
+160 
 	`¥ötf
 ("ThisÖrogram comes with ABSOLUTELY NO WARRANTY; for details "
 
-159 
+164 
 	}
 }
 
-164 
+169 
 	$¥öt_li˚n£
 –
 li˚n£_∑π
  ) {
 
-165 
+170 
 °¨t
 , 
 íd
@@ -951,53 +971,53 @@ li˚n£_∑π
 löe
 ;
 
-166 
+171 
 FILE
  * 
 Â
 ;
 
-167 
+172 
 buf„r
 [0x100];
 
-169 
+174 
 li˚n£_∑π
 ) {
 
-170 
+175 
 LICENSE_WARRANTEE
 :
 
-171 
+176 
 °¨t
  = 
 LICENSE_WARRANTEE_START
 ;
 
-172 
+177 
 íd
  = 
 LICENSE_WARRANTEE_END
 ;
 
-174 
+179 
 LICENSE_CONDITIONS
 :
 
-175 
+180 
 °¨t
  = 
 LICENSE_CONDITIONS_START
 ;
 
-176 
+181 
 íd
  = 
 LICENSE_CONDITIONS_END
 ;
 
-182 
+187 
 Â
  = 
 	`f›í
@@ -1005,29 +1025,29 @@ LICENSE_CONDITIONS_END
 LICENSE_FILE
 , "r");
 
-183 i‡(
+188 i‡(
 Â
  =
 NULL
 ) {
 
-184 
+189 
 	`≥º‹
 ("print_license: fopen");
 
-185 
+190 
 	`exô
 (
 EXIT_FAILURE
 );
 
-187 
+192 
 löe
  = 0;Üöê< 
 °¨t
 ;Üine++)
 
-188 
+193 
 	`fgës
 (
 buf„r
@@ -1035,13 +1055,13 @@ buf„r
 Â
 );
 
-189  ; 
+194  ; 
 löe
  < 
 íd
 ;Üine++) {
 
-190 
+195 
 	`fgës
 (
 buf„r
@@ -1049,37 +1069,37 @@ buf„r
 Â
 );
 
-191 
+196 
 	`¥ötf
 ("%s", 
 buf„r
 );
 
-193 
+198 
 	`f˛o£
 (
 Â
 );
 
-194 
+199 
 	}
 }
 
-198 
+203 
 	$ußge_1
 ( ) {
 
-199 
+204 
 	`¥ötf
 ("B+ Tªêo‡Ordî %d(I¡î«l).\n", 
 ‹dî_öã∫Æ
 );
 
-200 
+205 
 	`¥ötf
 ("Following Silberschatz, Korth, Sidarshan, Database Concepts, "
 
-205 
+210 
 	`¥ötf
 ("(%d <‹dî <%d).\n", 
 MIN_ORDER
@@ -1087,35 +1107,55 @@ MIN_ORDER
 MAX_ORDER
 );
 
-206 
+211 
 	`¥ötf
 ("To start with input fromá file ofÇewline-delimited integers, \n"
 
-209 
+214 
 	}
 }
 
-213 
+218 
 	$ußge_2
 ( ) {
 
-214 
+219 
 	`¥ötf
 ("Enterány ofÅhe following commandsáfterÅheÖrompt > :\n"
 
-230 
+235 
 	}
 }
 
-233 
+238 
 	$›í_èbÀ
 (c⁄° * 
 fûíame
 ) {
 
-234 
+239 
+i
+;
+
+242 
+i
+ = 0; i < 10; i++){
+
+243 if(
+èbÀ_ids
+[
+i
+] == 0)
+
+248 if(
+i
+ == 10){
+
+252 
 dbfûe
- = 
+[
+i
+] = 
 	`›í
 (
 fûíame
@@ -1123,13 +1163,17 @@ fûíame
 O_RDWR
 );
 
-235 i‡(
+253 i‡(
 dbfûe
- < 0) {
+[
+i
+] < 0) {
 
-237 
+255 
 dbfûe
- = 
+[
+i
+] = 
 	`›í
 (
 fûíame
@@ -1143,87 +1187,111 @@ S_IRUSR
 S_IWUSR
 );
 
-238 i‡(
+256 i‡(
 dbfûe
- < 0) {
+[
+i
+] < 0) {
 
-239 
+257 
 	`as£π
 ("failedÅo createÇew db file");
 
-243 
+261 
 	`mem£t
-(&
+((
 dbhódî
-, 0, 
++
+i
+), 0, 
 PAGE_SIZE
 );
 
-244 
+262 
 dbhódî
-.
+[
+i
+].
 ‰ìli°
  = 0;
 
-245 
+263 
 dbhódî
-.
+[
+i
+].
 roŸ_off£t
  = 0;
 
-246 
+264 
 dbhódî
-.
+[
+i
+].
 num_∑ges
  = 1;
 
-247 
+265 
 dbhódî
-.
+[
+i
+].
 fûe_off£t
  = 0;
 
-248 
+266 
 	`Êush_∑ge
 ((
 Page
-*)&
+*)(
 dbhódî
-);
++
+i
+));
 
-251 
+269 
 	`lﬂd_∑ge
 (0, (
 Page
-*)&
+*)(
 dbhódî
-);
++
+i
+));
 
-252 
+270 
 dbhódî
-.
+[
+i
+].
 fûe_off£t
  = 0;
 
-256 
+273  
+i
++1;
+
+274 
 	}
 }
 
-258 
+277 
 	$˛o£_db
 () {
 
-259 
+278 
 	`˛o£
 (
 dbfûe
-);
+[
+i
+]);
 
-260 
+279 
 	}
 }
 
-275 
+294 
 off_t
  
 	gqueue
@@ -1231,33 +1299,33 @@ off_t
 BPTREE_MAX_NODE
 ];
 
-276 
+295 
 	$¥öt_åì
 () {
 
-278 
+297 
 i
 ;
 
-279 
+298 
 ‰⁄t
  = 0;
 
-280 
+299 
 ª¨
  = 0;
 
-282 i‡(
+301 i‡(
 dbhódî
 .
 roŸ_off£t
  == 0) {
 
-283 
+302 
 	`¥ötf
 ("EmptyÅree.\n");
 
-287 
+306 
 queue
 [
 ª¨
@@ -1267,27 +1335,27 @@ dbhódî
 roŸ_off£t
 ;
 
-288 
+307 
 ª¨
 ++;
 
-289 
+308 
 queue
 [
 ª¨
 ] = 0;
 
-290 
+309 
 ª¨
 ++;
 
-291 
+310 
 ‰⁄t
  < 
 ª¨
 ) {
 
-292 
+311 
 off_t
  
 ∑ge_off£t
@@ -1297,41 +1365,41 @@ queue
 ‰⁄t
 ];
 
-293 
+312 
 ‰⁄t
 ++;
 
-295 i‡(
+314 i‡(
 ∑ge_off£t
  == 0) {
 
-296 
+315 
 	`¥ötf
 ("\n");
 
-298 i‡(
+317 i‡(
 ‰⁄t
  =
 ª¨
 ) ;
 
-301 
+320 
 queue
 [
 ª¨
 ] = 0;
 
-302 
+321 
 ª¨
 ++;
 
-306 
+325 
 NodePage
  
 node_∑ge
 ;
 
-307 
+326 
 	`lﬂd_∑ge
 (
 ∑ge_off£t
@@ -1341,13 +1409,13 @@ Page
 node_∑ge
 );
 
-308 i‡(
+327 i‡(
 node_∑ge
 .
 is_Àaf
  == 1) {
 
-310 
+329 
 LófPage
 * 
 Àaf_node
@@ -1355,7 +1423,7 @@ LófPage
 node_∑ge
 ;
 
-311 
+330 
 i
  = 0; i < 
 Àaf_node
@@ -1363,7 +1431,7 @@ i
 num_keys
 ; i++) {
 
-312 
+331 
 	`¥ötf
 ("%" 
 PRIu64
@@ -1375,11 +1443,11 @@ PRIu64
 i
 ));
 
-314 
+333 
 	`¥ötf
 ("| ");
 
-317 
+336 
 I¡î«lPage
 * 
 öã∫Æ_node
@@ -1387,7 +1455,7 @@ I¡î«lPage
 node_∑ge
 ;
 
-318 
+337 
 i
  = 0; i < 
 öã∫Æ_node
@@ -1395,7 +1463,7 @@ i
 num_keys
 ; i++) {
 
-319 
+338 
 	`¥ötf
 ("%" 
 PRIu64
@@ -1407,7 +1475,7 @@ PRIu64
 i
 ));
 
-320 
+339 
 queue
 [
 ª¨
@@ -1419,11 +1487,11 @@ queue
 i
 );
 
-321 
+340 
 ª¨
 ++;
 
-323 
+342 
 queue
 [
 ª¨
@@ -1435,19 +1503,19 @@ queue
 i
 );
 
-324 
+343 
 ª¨
 ++;
 
-325 
+344 
 	`¥ötf
 ("| ");
 
-328 
+347 
 	}
 }
 
-333 
+352 
 	$föd_™d_¥öt
 (
 uöt64_t
@@ -1455,13 +1523,13 @@ uöt64_t
 key
 ) {
 
-334 * 
+353 * 
 vÆue_found
  = 
 NULL
 ;
 
-335 
+354 
 vÆue_found
  = 
 	`föd
@@ -1469,13 +1537,13 @@ vÆue_found
 key
 );
 
-336 i‡(
+355 i‡(
 vÆue_found
  =
 NULL
 ) {
 
-337 
+356 
 	`¥ötf
 ("Rec‹dÇŸ found undî key %" 
 PRIu64
@@ -1483,7 +1551,7 @@ PRIu64
 key
 );
 
-340 
+359 
 	`¥ötf
 ("key %" 
 PRIu64
@@ -1493,17 +1561,17 @@ key
 vÆue_found
 );
 
-341 
+360 
 	`‰ì
 (
 vÆue_found
 );
 
-343 
+362 
 	}
 }
 
-350 
+369 
 boﬁ
  
 	$föd_Àaf
@@ -1517,11 +1585,11 @@ LófPage
 out_Àaf_node
 ) {
 
-351 
+370 
 i
  = 0;
 
-352 
+371 
 off_t
  
 roŸ_off£t
@@ -1529,21 +1597,21 @@ roŸ_off£t
 dbhódî
 .root_offset;
 
-354 i‡(
+373 i‡(
 roŸ_off£t
  == 0) {
 
-355  
+374  
 Ál£
 ;
 
-358 
+377 
 NodePage
  
 ∑ge
 ;
 
-359 
+378 
 	`lﬂd_∑ge
 (
 roŸ_off£t
@@ -1553,13 +1621,13 @@ Page
 ∑ge
 );
 
-361 !
+380 !
 ∑ge
 .
 is_Àaf
 ) {
 
-362 
+381 
 I¡î«lPage
 * 
 öã∫Æ_node
@@ -1567,11 +1635,11 @@ I¡î«lPage
 ∑ge
 ;
 
-364 
+383 
 i
  = 0;
 
-365 
+384 
 i
  < 
 öã∫Æ_node
@@ -1579,7 +1647,7 @@ i
 num_keys
 ) {
 
-366 i‡(
+385 i‡(
 key
  >
 	`INTERNAL_KEY
@@ -1589,7 +1657,7 @@ key
 i
 )) i++;
 
-370 
+389 
 	`lﬂd_∑ge
 (
 	`INTERNAL_OFFSET
@@ -1603,7 +1671,7 @@ Page
 ∑ge
 );
 
-373 
+392 
 	`mem˝y
 (
 out_Àaf_node
@@ -1613,37 +1681,39 @@ out_Àaf_node
 LófPage
 ));
 
-375  
+394  
 åue
 ;
 
-376 
+395 
 	}
 }
 
-382 * 
+401 * 
 	$föd
-(
+(
+èbÀ_id
+, 
 uöt64_t
  
 key
 ) {
 
-383 
+402 
 i
  = 0;
 
-384 * 
+403 * 
 out_vÆue
 ;
 
-386 
+405 
 LófPage
  
 Àaf_node
 ;
 
-387 i‡(!
+406 i‡(!
 	`föd_Àaf
 (
 key
@@ -1651,11 +1721,11 @@ key
 Àaf_node
 )) {
 
-388  
+407  
 NULL
 ;
 
-391 
+410 
 i
  = 0; i < 
 Àaf_node
@@ -1663,7 +1733,7 @@ i
 num_keys
 ; i++) {
 
-392 i‡(
+411 i‡(
 	`LEAF_KEY
 (&
 Àaf_node
@@ -1673,7 +1743,7 @@ i
 key
 ) {
 
-393 
+412 
 out_vÆue
  = (*)
 	`mÆloc
@@ -1681,7 +1751,7 @@ out_vÆue
 SIZE_VALUE
  * ());
 
-394 
+413 
 	`mem˝y
 (
 out_vÆue
@@ -1695,41 +1765,41 @@ i
 SIZE_VALUE
 );
 
-395  
+414  
 out_vÆue
 ;
 
-399  
+418  
 NULL
 ;
 
-400 
+419 
 	}
 }
 
-405 
+424 
 	$cut
 –
 Àngth
  ) {
 
-406 i‡(
+425 i‡(
 Àngth
  % 2 == 0)
 
-407  
+426  
 Àngth
 /2;
 
-409  
+428  
 Àngth
 /2 + 1;
 
-410 
+429 
 	}
 }
 
-417 
+436 
 	$gë_À·_ödex
 (
 I¡î«lPage
@@ -1741,11 +1811,11 @@ off_t
 À·_off£t
 ) {
 
-419 
+438 
 À·_ödex
  = 0;
 
-420 
+439 
 À·_ödex
  <
 ∑ª¡
@@ -1753,7 +1823,7 @@ off_t
 num_keys
  &&
 
-421 
+440 
 	`INTERNAL_OFFSET
 (
 ∑ª¡
@@ -1763,19 +1833,19 @@ num_keys
 À·_off£t
 )
 
-422 
+441 
 À·_ödex
 ++;
 
-423  
+442  
 À·_ödex
 ;
 
-424 
+443 
 	}
 }
 
-430 
+449 
 	$ö£π_öto_Àaf
 (
 LófPage
@@ -1789,19 +1859,19 @@ key
 vÆue
 ) {
 
-431 
+450 
 ö£πi⁄_poöt
 ;
 
-432 
+451 
 i
 ;
 
-434 
+453 
 ö£πi⁄_poöt
  = 0;
 
-435 
+454 
 ö£πi⁄_poöt
  < 
 Àaf_node
@@ -1809,7 +1879,7 @@ i
 num_keys
  &&
 
-436 
+455 
 	`LEAF_KEY
 (
 Àaf_node
@@ -1819,11 +1889,11 @@ num_keys
 key
 )
 
-437 
+456 
 ö£πi⁄_poöt
 ++;
 
-440 
+459 
 i
  = 
 Àaf_node
@@ -1833,7 +1903,7 @@ num_keys
 ö£πi⁄_poöt
 ; i--) {
 
-441 
+460 
 	`LEAF_KEY
 (
 Àaf_node
@@ -1841,7 +1911,7 @@ num_keys
 i
 +1) = LEAF_KEY(leaf_node, i);
 
-442 
+461 
 	`mem˝y
 (
 	`LEAF_VALUE
@@ -1853,7 +1923,7 @@ i
 SIZE_VALUE
 );
 
-445 
+464 
 	`LEAF_KEY
 (
 Àaf_node
@@ -1863,7 +1933,7 @@ SIZE_VALUE
 key
 ;
 
-446 
+465 
 	`mem˝y
 (
 	`LEAF_VALUE
@@ -1877,13 +1947,13 @@ vÆue
 SIZE_VALUE
 );
 
-447 
+466 
 Àaf_node
 ->
 num_keys
 ++;
 
-450 
+469 
 	`Êush_∑ge
 ((
 Page
@@ -1891,11 +1961,11 @@ Page
 Àaf_node
 );
 
-451 
+470 
 	}
 }
 
-458 
+477 
 	$ö£π_öto_Àaf_a·î_•lôtög
 (
 LófPage
@@ -1909,7 +1979,7 @@ key
 vÆue
 ) {
 
-460 
+479 
 ö£πi⁄_ödex
 , 
 •lô
@@ -1919,19 +1989,19 @@ i
 j
 ;
 
-461 
+480 
 uöt64_t
  
 √w_key
 ;
 
-464 
+483 
 LófPage
  
 √w_Àaf
 ;
 
-465 
+484 
 √w_Àaf
 .
 is_Àaf
@@ -1939,17 +2009,17 @@ is_Àaf
 åue
 ;
 
-466 
+485 
 √w_Àaf
 .
 num_keys
  = 0;
 
-468 
+487 
 ö£πi⁄_ödex
  = 0;
 
-469 
+488 
 ö£πi⁄_ödex
  < 
 ‹dî_Àaf
@@ -1961,11 +2031,11 @@ num_keys
 key
 )
 
-470 
+489 
 ö£πi⁄_ödex
 ++;
 
-472 
+491 
 •lô
  = 
 	`cut
@@ -1973,13 +2043,13 @@ key
 ‹dî_Àaf
  - 1);
 
-474 i‡(
+493 i‡(
 ö£πi⁄_ödex
  < 
 •lô
 ) {
 
-476 
+495 
 i
  = 
 •lô
@@ -1989,7 +2059,7 @@ j
 ‹dî_Àaf
  - 1; i++, j++) {
 
-477 
+496 
 	`LEAF_KEY
 (&
 √w_Àaf
@@ -2001,7 +2071,7 @@ j
 i
 );
 
-478 
+497 
 	`mem˝y
 (
 	`LEAF_VALUE
@@ -2017,19 +2087,19 @@ i
 SIZE_VALUE
 );
 
-480 
+499 
 √w_Àaf
 .
 num_keys
 ++;
 
-481 
+500 
 Àaf
 ->
 num_keys
 --;
 
-484 
+503 
 i
  = 
 •lô
@@ -2037,7 +2107,7 @@ i
 ö£πi⁄_ödex
 ; i--) {
 
-485 
+504 
 	`LEAF_KEY
 (
 Àaf
@@ -2045,7 +2115,7 @@ i
 i
 +1) = LEAF_KEY(leaf, i);
 
-486 
+505 
 	`mem˝y
 (
 	`LEAF_VALUE
@@ -2057,7 +2127,7 @@ i
 SIZE_VALUE
 );
 
-488 
+507 
 	`LEAF_KEY
 (
 Àaf
@@ -2067,7 +2137,7 @@ SIZE_VALUE
 key
 ;
 
-489 
+508 
 	`mem˝y
 (
 	`LEAF_VALUE
@@ -2081,13 +2151,13 @@ vÆue
 SIZE_VALUE
 );
 
-490 
+509 
 Àaf
 ->
 num_keys
 ++;
 
-493 
+512 
 i
  = 
 •lô
@@ -2097,17 +2167,17 @@ j
 ‹dî_Àaf
  - 1; i++, j++) {
 
-494 i‡(
+513 i‡(
 i
  =
 ö£πi⁄_ödex
 ) {
 
-496 
+515 
 j
 ++;
 
-498 
+517 
 	`LEAF_KEY
 (&
 √w_Àaf
@@ -2119,7 +2189,7 @@ j
 i
 );
 
-499 
+518 
 	`mem˝y
 (
 	`LEAF_VALUE
@@ -2135,19 +2205,19 @@ i
 SIZE_VALUE
 );
 
-501 
+520 
 √w_Àaf
 .
 num_keys
 ++;
 
-502 
+521 
 Àaf
 ->
 num_keys
 --;
 
-504 
+523 
 	`LEAF_KEY
 (&
 √w_Àaf
@@ -2159,7 +2229,7 @@ num_keys
 key
 ;
 
-505 
+524 
 	`mem˝y
 (
 	`LEAF_VALUE
@@ -2175,13 +2245,13 @@ vÆue
 SIZE_VALUE
 );
 
-506 
+525 
 √w_Àaf
 .
 num_keys
 ++;
 
-510 
+529 
 √w_Àaf
 .
 fûe_off£t
@@ -2189,7 +2259,7 @@ fûe_off£t
 	`gë_‰ì_∑ge
 ();
 
-513 
+532 
 √w_Àaf
 .
 siblög
@@ -2197,7 +2267,7 @@ siblög
 Àaf
 ->sibling;
 
-514 
+533 
 Àaf
 ->
 siblög
@@ -2207,7 +2277,7 @@ siblög
 fûe_off£t
 ;
 
-517 
+536 
 i
  = 
 Àaf
@@ -2217,7 +2287,7 @@ num_keys
 ‹dî_Àaf
  - 1; i++) {
 
-518 
+537 
 	`LEAF_KEY
 (
 Àaf
@@ -2225,7 +2295,7 @@ num_keys
 i
 ) = 0;
 
-519 
+538 
 	`mem£t
 (
 	`LEAF_VALUE
@@ -2237,7 +2307,7 @@ i
 SIZE_VALUE
 );
 
-521 
+540 
 i
  = 
 √w_Àaf
@@ -2247,7 +2317,7 @@ num_keys
 ‹dî_Àaf
  - 1; i++) {
 
-522 
+541 
 	`LEAF_KEY
 (&
 √w_Àaf
@@ -2255,7 +2325,7 @@ num_keys
 i
 ) = 0;
 
-523 
+542 
 	`mem£t
 (
 	`LEAF_VALUE
@@ -2267,7 +2337,7 @@ i
 SIZE_VALUE
 );
 
-526 
+545 
 √w_Àaf
 .
 ∑ª¡
@@ -2275,7 +2345,7 @@ SIZE_VALUE
 Àaf
 ->parent;
 
-528 
+547 
 	`Êush_∑ge
 ((
 Page
@@ -2283,7 +2353,7 @@ Page
 Àaf
 );
 
-529 
+548 
 	`Êush_∑ge
 ((
 Page
@@ -2291,7 +2361,7 @@ Page
 √w_Àaf
 );
 
-531 
+550 
 √w_key
  = 
 	`LEAF_KEY
@@ -2299,7 +2369,7 @@ Page
 √w_Àaf
 , 0);
 
-534 
+553 
 	`ö£π_öto_∑ª¡
 ((
 NodePage
@@ -2311,11 +2381,11 @@ NodePage
 √w_Àaf
 );
 
-535 
+554 
 	}
 }
 
-541 
+560 
 	$ö£π_öto_node
 (
 I¡î«lPage
@@ -2333,11 +2403,11 @@ off_t
 right_off£t
 ) {
 
-542 
+561 
 i
 ;
 
-544 
+563 
 i
  = 
 n
@@ -2347,7 +2417,7 @@ num_keys
 À·_ödex
 ; i--) {
 
-545 
+564 
 	`INTERNAL_OFFSET
 (
 n
@@ -2355,7 +2425,7 @@ n
 i
  + 1) = INTERNAL_OFFSET(n, i);
 
-546 
+565 
 	`INTERNAL_KEY
 (
 n
@@ -2363,7 +2433,7 @@ n
 i
 ) = INTERNAL_KEY(n, i - 1);
 
-548 
+567 
 	`INTERNAL_OFFSET
 (
 n
@@ -2373,7 +2443,7 @@ n
 right_off£t
 ;
 
-549 
+568 
 	`INTERNAL_KEY
 (
 n
@@ -2383,17 +2453,17 @@ n
 key
 ;
 
-550 
+569 
 n
 ->
 num_keys
 ++;
 
-551 
+570 
 	}
 }
 
-557 
+576 
 	$ö£π_öto_node_a·î_•lôtög
 (
 I¡î«lPage
@@ -2411,7 +2481,7 @@ off_t
 right_off£t
 ) {
 
-558 
+577 
 i
 , 
 j
@@ -2421,19 +2491,19 @@ j
 k_¥ime
 ;
 
-559 
+578 
 uöt64_t
 * 
 ãmp_keys
 ;
 
-560 
+579 
 off_t
 * 
 ãmp_poöãrs
 ;
 
-571 
+590 
 ãmp_poöãrs
  = 
 	`mÆloc
@@ -2443,23 +2513,23 @@ off_t
 off_t
 ) );
 
-572 i‡(
+591 i‡(
 ãmp_poöãrs
  =
 NULL
 ) {
 
-573 
+592 
 	`≥º‹
 ("TemporaryÖointersárray for splittingÇodes.");
 
-574 
+593 
 	`exô
 (
 EXIT_FAILURE
 );
 
-576 
+595 
 ãmp_keys
  = 
 	`mÆloc
@@ -2469,23 +2539,23 @@ EXIT_FAILURE
 uöt64_t
 ) );
 
-577 i‡(
+596 i‡(
 ãmp_keys
  =
 NULL
 ) {
 
-578 
+597 
 	`≥º‹
 ("Temporary keysárray for splittingÇodes.");
 
-579 
+598 
 	`exô
 (
 EXIT_FAILURE
 );
 
-582 
+601 
 i
  = 0, 
 j
@@ -2495,13 +2565,13 @@ j
 num_keys
  + 1; i++, j++) {
 
-583 i‡(
+602 i‡(
 j
  =
 À·_ödex
  + 1) j++;
 
-584 
+603 
 ãmp_poöãrs
 [
 j
@@ -2513,7 +2583,7 @@ j
 i
 );
 
-587 
+606 
 i
  = 0, 
 j
@@ -2523,13 +2593,13 @@ j
 num_keys
 ; i++, j++) {
 
-588 i‡(
+607 i‡(
 j
  =
 À·_ödex
 ) j++;
 
-589 
+608 
 ãmp_keys
 [
 j
@@ -2541,7 +2611,7 @@ j
 i
 );
 
-592 
+611 
 ãmp_poöãrs
 [
 À·_ödex
@@ -2549,7 +2619,7 @@ i
 right_off£t
 ;
 
-593 
+612 
 ãmp_keys
 [
 À·_ödex
@@ -2557,7 +2627,7 @@ right_off£t
 key
 ;
 
-599 
+618 
 •lô
  = 
 	`cut
@@ -2565,25 +2635,25 @@ key
 ‹dî_öã∫Æ
 );
 
-601 
+620 
 I¡î«lPage
  
 √w_node
 ;
 
-602 
+621 
 √w_node
 .
 num_keys
  = 0;
 
-603 
+622 
 √w_node
 .
 is_Àaf
  = 0;
 
-604 
+623 
 √w_node
 .
 fûe_off£t
@@ -2591,19 +2661,19 @@ fûe_off£t
 	`gë_‰ì_∑ge
 ();
 
-606 
+625 
 ﬁd_node
 ->
 num_keys
  = 0;
 
-607 
+626 
 i
  = 0; i < 
 •lô
  - 1; i++) {
 
-608 
+627 
 	`INTERNAL_OFFSET
 (
 ﬁd_node
@@ -2613,7 +2683,7 @@ i
 ãmp_poöãrs
 [i];
 
-609 
+628 
 	`INTERNAL_KEY
 (
 ﬁd_node
@@ -2623,13 +2693,13 @@ i
 ãmp_keys
 [i];
 
-610 
+629 
 ﬁd_node
 ->
 num_keys
 ++;
 
-612 
+631 
 	`INTERNAL_OFFSET
 (
 ﬁd_node
@@ -2639,7 +2709,7 @@ i
 ãmp_poöãrs
 [i];
 
-613 
+632 
 k_¥ime
  = 
 ãmp_keys
@@ -2647,7 +2717,7 @@ k_¥ime
 •lô
  - 1];
 
-614 ++
+633 ++
 i
 , 
 j
@@ -2655,7 +2725,7 @@ j
 ‹dî_öã∫Æ
 ; i++, j++) {
 
-615 
+634 
 	`INTERNAL_OFFSET
 (&
 √w_node
@@ -2667,7 +2737,7 @@ j
 i
 ];
 
-616 
+635 
 	`INTERNAL_KEY
 (&
 √w_node
@@ -2679,13 +2749,13 @@ j
 i
 ];
 
-617 
+636 
 √w_node
 .
 num_keys
 ++;
 
-619 
+638 
 	`INTERNAL_OFFSET
 (&
 √w_node
@@ -2697,19 +2767,19 @@ j
 i
 ];
 
-620 
+639 
 	`‰ì
 (
 ãmp_poöãrs
 );
 
-621 
+640 
 	`‰ì
 (
 ãmp_keys
 );
 
-622 
+641 
 √w_node
 .
 ∑ª¡
@@ -2717,7 +2787,7 @@ i
 ﬁd_node
 ->parent;
 
-623 
+642 
 i
  = 0; i <
 √w_node
@@ -2725,13 +2795,13 @@ i
 num_keys
 ; i++) {
 
-624 
+643 
 NodePage
  
 chûd_∑ge
 ;
 
-625 
+644 
 	`lﬂd_∑ge
 (
 	`INTERNAL_OFFSET
@@ -2745,7 +2815,7 @@ Page
 chûd_∑ge
 );
 
-626 
+645 
 chûd_∑ge
 .
 ∑ª¡
@@ -2755,7 +2825,7 @@ chûd_∑ge
 fûe_off£t
 ;
 
-627 
+646 
 	`Êush_∑ge
 ((
 Page
@@ -2763,7 +2833,7 @@ Page
 chûd_∑ge
 );
 
-631 
+650 
 i
  = 
 ﬁd_node
@@ -2773,7 +2843,7 @@ num_keys
 ‹dî_öã∫Æ
  - 1; i++) {
 
-632 
+651 
 	`INTERNAL_OFFSET
 (
 ﬁd_node
@@ -2781,7 +2851,7 @@ num_keys
 i
 +1) = 0;
 
-633 
+652 
 	`INTERNAL_KEY
 (
 ﬁd_node
@@ -2789,7 +2859,7 @@ i
 i
 ) = 0;
 
-636 
+655 
 i
  = 
 √w_node
@@ -2799,7 +2869,7 @@ num_keys
 ‹dî_öã∫Æ
  - 1; i++) {
 
-637 
+656 
 	`INTERNAL_OFFSET
 (&
 √w_node
@@ -2807,7 +2877,7 @@ num_keys
 i
 +1) = 0;
 
-638 
+657 
 	`INTERNAL_KEY
 (&
 √w_node
@@ -2815,7 +2885,7 @@ i
 i
 ) = 0;
 
-642 
+661 
 	`Êush_∑ge
 ((
 Page
@@ -2823,7 +2893,7 @@ Page
 √w_node
 );
 
-643 
+662 
 	`Êush_∑ge
 ((
 Page
@@ -2831,7 +2901,7 @@ Page
 ﬁd_node
 );
 
-649 
+668 
 	`ö£π_öto_∑ª¡
 ((
 NodePage
@@ -2843,11 +2913,11 @@ k_¥ime
 √w_node
 );
 
-650 
+669 
 	}
 }
 
-655 
+674 
 	$ö£π_öto_∑ª¡
 (
 NodePage
@@ -2861,19 +2931,19 @@ key
 right
 ) {
 
-657 
+676 
 I¡î«lPage
  
 ∑ª¡_node
 ;
 
-660 i‡(
+679 i‡(
 À·
 ->
 ∑ª¡
  == 0) {
 
-661 
+680 
 	`ö£π_öto_√w_roŸ
 (
 À·
@@ -2883,7 +2953,7 @@ key
 right
 );
 
-665 
+684 
 	`lﬂd_∑ge
 (
 À·
@@ -2895,7 +2965,7 @@ Page
 ∑ª¡_node
 );
 
-675 
+694 
 À·_ödex
  = 
 	`gë_À·_ödex
@@ -2907,7 +2977,7 @@ Page
 fûe_off£t
 );
 
-680 i‡(
+699 i‡(
 ∑ª¡_node
 .
 num_keys
@@ -2915,7 +2985,7 @@ num_keys
 ‹dî_öã∫Æ
  - 1) {
 
-681 
+700 
 	`ö£π_öto_node
 (&
 ∑ª¡_node
@@ -2929,7 +2999,7 @@ right
 fûe_off£t
 );
 
-682 
+701 
 	`Êush_∑ge
 ((
 Page
@@ -2937,7 +3007,7 @@ Page
 ∑ª¡_node
 );
 
-690  
+709  
 	`ö£π_öto_node_a·î_•lôtög
 (&
 ∑ª¡_node
@@ -2951,11 +3021,11 @@ right
 fûe_off£t
 );
 
-691 
+710 
 	}
 }
 
-697 
+716 
 	$ö£π_öto_√w_roŸ
 (
 NodePage
@@ -2969,13 +3039,13 @@ key
 right
 ) {
 
-699 
+718 
 I¡î«lPage
  
 roŸ_node
 ;
 
-700 
+719 
 	`mem£t
 (&
 roŸ_node
@@ -2983,7 +3053,7 @@ roŸ_node
 I¡î«lPage
 ));
 
-701 
+720 
 roŸ_node
 .
 fûe_off£t
@@ -2991,7 +3061,7 @@ fûe_off£t
 	`gë_‰ì_∑ge
 ();
 
-702 
+721 
 	`INTERNAL_KEY
 (&
 roŸ_node
@@ -2999,7 +3069,7 @@ roŸ_node
 key
 ;
 
-703 
+722 
 	`INTERNAL_OFFSET
 (&
 roŸ_node
@@ -3009,7 +3079,7 @@ roŸ_node
 fûe_off£t
 ;
 
-704 
+723 
 	`INTERNAL_OFFSET
 (&
 roŸ_node
@@ -3019,25 +3089,25 @@ right
 fûe_off£t
 ;
 
-705 
+724 
 roŸ_node
 .
 num_keys
 ++;
 
-706 
+725 
 roŸ_node
 .
 ∑ª¡
  = 0;
 
-707 
+726 
 roŸ_node
 .
 is_Àaf
  = 0;
 
-708 
+727 
 À·
 ->
 ∑ª¡
@@ -3047,7 +3117,7 @@ roŸ_node
 fûe_off£t
 ;
 
-709 
+728 
 right
 ->
 ∑ª¡
@@ -3057,7 +3127,7 @@ roŸ_node
 fûe_off£t
 ;
 
-711 
+730 
 	`Êush_∑ge
 ((
 Page
@@ -3065,7 +3135,7 @@ Page
 roŸ_node
 );
 
-712 
+731 
 	`Êush_∑ge
 ((
 Page
@@ -3073,7 +3143,7 @@ Page
 À·
 );
 
-713 
+732 
 	`Êush_∑ge
 ((
 Page
@@ -3081,7 +3151,7 @@ Page
 right
 );
 
-715 
+734 
 dbhódî
 .
 roŸ_off£t
@@ -3091,7 +3161,7 @@ roŸ_node
 fûe_off£t
 ;
 
-716 
+735 
 	`Êush_∑ge
 ((
 Page
@@ -3099,11 +3169,11 @@ Page
 dbhódî
 );
 
-717 
+736 
 	}
 }
 
-721 
+740 
 	$°¨t_√w_åì
 (
 uöt64_t
@@ -3113,13 +3183,13 @@ key
 vÆue
 ) {
 
-722 
+741 
 LófPage
  
 roŸ_node
 ;
 
-724 
+743 
 off_t
  
 roŸ_off£t
@@ -3127,7 +3197,7 @@ roŸ_off£t
 	`gë_‰ì_∑ge
 ();
 
-725 
+744 
 roŸ_node
 .
 fûe_off£t
@@ -3135,25 +3205,25 @@ fûe_off£t
 roŸ_off£t
 ;
 
-727 
+746 
 roŸ_node
 .
 ∑ª¡
  = 0;
 
-728 
+747 
 roŸ_node
 .
 is_Àaf
  = 1;
 
-729 
+748 
 roŸ_node
 .
 num_keys
  = 1;
 
-730 
+749 
 	`LEAF_KEY
 (&
 roŸ_node
@@ -3161,13 +3231,13 @@ roŸ_node
 key
 ;
 
-731 
+750 
 roŸ_node
 .
 siblög
  = 0;
 
-732 
+751 
 	`mem˝y
 (
 	`LEAF_VALUE
@@ -3179,7 +3249,7 @@ vÆue
 SIZE_VALUE
 );
 
-734 
+753 
 	`Êush_∑ge
 ((
 Page
@@ -3187,13 +3257,13 @@ Page
 roŸ_node
 );
 
-736 
+755 
 dbhódî
 .
 roŸ_off£t
  =Ñoot_offset;
 
-737 
+756 
 	`Êush_∑ge
 ((
 Page
@@ -3201,13 +3271,15 @@ Page
 dbhódî
 );
 
-738 
+757 
 	}
 }
 
-746 
+765 
 	$ö£π
-(
+(
+èbÀ_id
+, 
 uöt64_t
  
 key
@@ -3215,13 +3287,13 @@ key
 vÆue
 ) {
 
-750 * 
+769 * 
 vÆue_found
  = 
 NULL
 ;
 
-752 i‡((
+771 i‡((
 vÆue_found
  = 
 	`föd
@@ -3229,19 +3301,19 @@ vÆue_found
 key
 )) != 0) {
 
-753 
+772 
 	`‰ì
 (
 vÆue_found
 );
 
-760 i‡(
+779 i‡(
 dbhódî
 .
 roŸ_off£t
  == 0) {
 
-761 
+780 
 	`°¨t_√w_åì
 (
 key
@@ -3249,13 +3321,13 @@ key
 vÆue
 );
 
-769 
+788 
 LófPage
  
 Àaf_node
 ;
 
-770 
+789 
 	`föd_Àaf
 (
 key
@@ -3263,7 +3335,7 @@ key
 Àaf_node
 );
 
-775 i‡(
+794 i‡(
 Àaf_node
 .
 num_keys
@@ -3271,7 +3343,7 @@ num_keys
 ‹dî_Àaf
  - 1) {
 
-776 
+795 
 	`ö£π_öto_Àaf
 (&
 Àaf_node
@@ -3281,7 +3353,7 @@ key
 vÆue
 );
 
-780 
+799 
 	`ö£π_öto_Àaf_a·î_•lôtög
 (&
 Àaf_node
@@ -3291,11 +3363,11 @@ key
 vÆue
 );
 
-783 
+802 
 	}
 }
 
-793 
+812 
 	$gë_√ighb‹_ödex
 (
 NodePage
@@ -3303,17 +3375,17 @@ NodePage
 node_∑ge
 ) {
 
-795 
+814 
 i
 ;
 
-803 
+822 
 I¡î«lPage
  
 ∑ª¡_node
 ;
 
-804 
+823 
 	`lﬂd_∑ge
 (
 node_∑ge
@@ -3325,7 +3397,7 @@ Page
 ∑ª¡_node
 );
 
-805 
+824 
 i
  = 0; i <
 ∑ª¡_node
@@ -3333,7 +3405,7 @@ i
 num_keys
 ; i++)
 
-806 i‡(
+825 i‡(
 	`INTERNAL_OFFSET
 (&
 ∑ª¡_node
@@ -3345,19 +3417,19 @@ node_∑ge
 fûe_off£t
 )
 
-807  
+826  
 i
  - 1;
 
-810 
+829 
 	`as£π
 ("Search forÇonexistentÖointerÅoÇode inÖarent.");
 
-812 
+831 
 	}
 }
 
-814 
+833 
 	$ªmove_íåy_‰om_node
 (
 NodePage
@@ -3369,21 +3441,21 @@ uöt64_t
 key
 ) {
 
-816 
+835 
 i
 ;
 
-817 
+836 
 key_idx
  = 0;
 
-819 i‡(
+838 i‡(
 node_∑ge
 ->
 is_Àaf
 ) {
 
-820 
+839 
 LófPage
 * 
 Àaf_node
@@ -3391,7 +3463,7 @@ LófPage
 node_∑ge
 ;
 
-823 
+842 
 i
  = 0; i < 
 Àaf_node
@@ -3399,7 +3471,7 @@ i
 num_keys
 ; i++) {
 
-824 i‡(
+843 i‡(
 	`LEAF_KEY
 (
 Àaf_node
@@ -3409,13 +3481,13 @@ i
 key
 ) {
 
-825 
+844 
 key_idx
  = 
 i
 ;
 
-829 i‡(
+848 i‡(
 i
  =
 Àaf_node
@@ -3423,11 +3495,11 @@ i
 num_keys
 ) {
 
-830 
+849 
 	`as£π
 ("remove_entry_from_node:Ço key inÅhisÖage");
 
-834 
+853 
 i
  = 
 key_idx
@@ -3437,7 +3509,7 @@ key_idx
 num_keys
  - 1; i++) {
 
-835 
+854 
 	`LEAF_KEY
 (
 Àaf_node
@@ -3445,7 +3517,7 @@ num_keys
 i
 ) = LEAF_KEY(leaf_node, i+1);
 
-836 
+855 
 	`mem˝y
 (
 	`LEAF_VALUE
@@ -3457,7 +3529,7 @@ i
 SIZE_VALUE
 );
 
-839 
+858 
 	`LEAF_KEY
 (
 Àaf_node
@@ -3465,7 +3537,7 @@ SIZE_VALUE
 num_keys
  - 1) = 0;
 
-840 
+859 
 	`mem£t
 (
 	`LEAF_VALUE
@@ -3477,13 +3549,13 @@ num_keys
 SIZE_VALUE
 );
 
-842 
+861 
 Àaf_node
 ->
 num_keys
 --;
 
-845 
+864 
 I¡î«lPage
 * 
 öã∫Æ_node
@@ -3491,7 +3563,7 @@ I¡î«lPage
 node_∑ge
 ;
 
-848 
+867 
 i
  = 0; i < 
 öã∫Æ_node
@@ -3499,7 +3571,7 @@ i
 num_keys
 ; i++) {
 
-849 i‡(
+868 i‡(
 	`INTERNAL_KEY
 (
 öã∫Æ_node
@@ -3509,13 +3581,13 @@ i
 key
 ) {
 
-850 
+869 
 key_idx
  = 
 i
 ;
 
-854 i‡(
+873 i‡(
 i
  =
 öã∫Æ_node
@@ -3523,11 +3595,11 @@ i
 num_keys
 ) {
 
-855 
+874 
 	`as£π
 ("remove_entry_from_node:Ço key inÅhisÖage");
 
-859 
+878 
 i
  = 
 key_idx
@@ -3537,7 +3609,7 @@ key_idx
 num_keys
  - 1; i++) {
 
-860 
+879 
 	`INTERNAL_KEY
 (
 öã∫Æ_node
@@ -3545,7 +3617,7 @@ num_keys
 i
 ) = INTERNAL_KEY(internal_node, i+1);
 
-861 
+880 
 	`INTERNAL_OFFSET
 (
 öã∫Æ_node
@@ -3553,7 +3625,7 @@ i
 i
 +1) = INTERNAL_OFFSET(internal_node, i+2);
 
-864 
+883 
 	`INTERNAL_KEY
 (
 öã∫Æ_node
@@ -3561,7 +3633,7 @@ i
 num_keys
  - 1) = 0;
 
-865 
+884 
 	`INTERNAL_OFFSET
 (
 öã∫Æ_node
@@ -3569,13 +3641,13 @@ num_keys
 num_keys
 ) = 0;
 
-867 
+886 
 öã∫Æ_node
 ->
 num_keys
 --;
 
-870 
+889 
 	`Êush_∑ge
 ((
 Page
@@ -3583,21 +3655,21 @@ Page
 node_∑ge
 );
 
-871 
+890 
 	}
 }
 
-873 
+892 
 	$adju°_roŸ
 () {
 
-875 
+894 
 NodePage
  
 roŸ_∑ge
 ;
 
-876 
+895 
 	`lﬂd_∑ge
 (
 dbhódî
@@ -3609,19 +3681,19 @@ Page
 roŸ_∑ge
 );
 
-883 i‡(
+902 i‡(
 roŸ_∑ge
 .
 num_keys
  > 0)
 
-893 i‡(!
+912 i‡(!
 roŸ_∑ge
 .
 is_Àaf
 ) {
 
-894 
+913 
 I¡î«lPage
 * 
 roŸ_node
@@ -3629,7 +3701,7 @@ roŸ_node
 roŸ_∑ge
 ;
 
-895 
+914 
 dbhódî
 .
 roŸ_off£t
@@ -3639,13 +3711,13 @@ roŸ_off£t
 roŸ_node
 , 0);
 
-897 
+916 
 NodePage
  
 node_∑ge
 ;
 
-898 
+917 
 	`lﬂd_∑ge
 (
 dbhódî
@@ -3657,13 +3729,13 @@ Page
 node_∑ge
 );
 
-899 
+918 
 node_∑ge
 .
 ∑ª¡
  = 0;
 
-901 
+920 
 	`Êush_∑ge
 ((
 Page
@@ -3671,7 +3743,7 @@ Page
 node_∑ge
 );
 
-902 
+921 
 	`Êush_∑ge
 ((
 Page
@@ -3679,13 +3751,13 @@ Page
 dbhódî
 );
 
-909 
+928 
 dbhódî
 .
 roŸ_off£t
  = 0;
 
-910 
+929 
 	`Êush_∑ge
 ((
 Page
@@ -3693,7 +3765,7 @@ Page
 dbhódî
 );
 
-913 
+932 
 	`put_‰ì_∑ge
 (
 roŸ_∑ge
@@ -3701,11 +3773,11 @@ roŸ_∑ge
 fûe_off£t
 );
 
-914 
+933 
 	}
 }
 
-922 
+941 
 	$cﬂÀs˚_nodes
 (
 NodePage
@@ -3719,7 +3791,7 @@ node_∑ge
 k_¥ime
 ) {
 
-924 
+943 
 i
 , 
 j
@@ -3729,35 +3801,35 @@ j
 n_íd
 ;
 
-925 
+944 
 NodePage
 * 
 tmp
 ;
 
-931 i‡(
+950 i‡(
 √ighb‹_ödex
  == -1) {
 
-932 
+951 
 tmp
  = 
 node_∑ge
 ;
 
-933 
+952 
 node_∑ge
  = 
 √ighb‹_∑ge
 ;
 
-934 
+953 
 √ighb‹_∑ge
  = 
 tmp
 ;
 
-943 
+962 
 √ighb‹_ö£πi⁄_ödex
  = 
 √ighb‹_∑ge
@@ -3765,13 +3837,13 @@ tmp
 num_keys
 ;
 
-950 i‡(!
+969 i‡(!
 node_∑ge
 ->
 is_Àaf
 ) {
 
-951 
+970 
 I¡î«lPage
 * 
 node
@@ -3779,7 +3851,7 @@ node
 node_∑ge
 ;
 
-952 
+971 
 I¡î«lPage
 * 
 √ighb‹_node
@@ -3787,7 +3859,7 @@ I¡î«lPage
 √ighb‹_∑ge
 ;
 
-957 
+976 
 	`INTERNAL_KEY
 (
 √ighb‹_node
@@ -3797,13 +3869,13 @@ I¡î«lPage
 k_¥ime
 ;
 
-958 
+977 
 √ighb‹_node
 ->
 num_keys
 ++;
 
-960 
+979 
 n_íd
  = 
 node
@@ -3811,7 +3883,7 @@ node
 num_keys
 ;
 
-962 
+981 
 i
  = 
 √ighb‹_ö£πi⁄_ödex
@@ -3821,7 +3893,7 @@ j
 n_íd
 ; i++, j++) {
 
-963 
+982 
 	`INTERNAL_KEY
 (
 √ighb‹_node
@@ -3833,7 +3905,7 @@ node
 j
 );
 
-964 
+983 
 	`INTERNAL_OFFSET
 (
 √ighb‹_node
@@ -3845,19 +3917,19 @@ node
 j
 );
 
-965 
+984 
 √ighb‹_node
 ->
 num_keys
 ++;
 
-966 
+985 
 node
 ->
 num_keys
 --;
 
-973 
+992 
 	`INTERNAL_OFFSET
 (
 √ighb‹_node
@@ -3869,7 +3941,7 @@ node
 j
 );
 
-978 
+997 
 i
  = 0; i < 
 √ighb‹_node
@@ -3877,13 +3949,13 @@ i
 num_keys
  + 1; i++) {
 
-979 
+998 
 NodePage
  
 chûd_∑ge
 ;
 
-980 
+999 
 	`lﬂd_∑ge
 (
 	`INTERNAL_OFFSET
@@ -3897,7 +3969,7 @@ Page
 chûd_∑ge
 );
 
-981 
+1000 
 chûd_∑ge
 .
 ∑ª¡
@@ -3907,7 +3979,7 @@ chûd_∑ge
 fûe_off£t
 ;
 
-982 
+1001 
 	`Êush_∑ge
 ((
 Page
@@ -3915,7 +3987,7 @@ Page
 chûd_∑ge
 );
 
-985 
+1004 
 	`Êush_∑ge
 ((
 Page
@@ -3923,7 +3995,7 @@ Page
 √ighb‹_node
 );
 
-987 
+1006 
 	`put_‰ì_∑ge
 (
 node
@@ -3931,7 +4003,7 @@ node
 fûe_off£t
 );
 
-997 
+1016 
 LófPage
 * 
 node
@@ -3939,7 +4011,7 @@ node
 node_∑ge
 ;
 
-998 
+1017 
 LófPage
 * 
 √ighb‹_node
@@ -3947,7 +4019,7 @@ LófPage
 √ighb‹_∑ge
 ;
 
-1000 
+1019 
 i
  = 
 √ighb‹_ö£πi⁄_ödex
@@ -3959,7 +4031,7 @@ node
 num_keys
 ; i++, j++) {
 
-1001 
+1020 
 	`LEAF_KEY
 (
 √ighb‹_node
@@ -3971,7 +4043,7 @@ node
 j
 );
 
-1002 
+1021 
 	`mem˝y
 (
 	`LEAF_VALUE
@@ -3987,13 +4059,13 @@ j
 SIZE_VALUE
 );
 
-1003 
+1022 
 √ighb‹_node
 ->
 num_keys
 ++;
 
-1005 
+1024 
 √ighb‹_node
 ->
 siblög
@@ -4001,7 +4073,7 @@ siblög
 node
 ->sibling;
 
-1007 
+1026 
 	`Êush_∑ge
 ((
 Page
@@ -4009,7 +4081,7 @@ Page
 √ighb‹_node
 );
 
-1009 
+1028 
 	`put_‰ì_∑ge
 (
 node
@@ -4017,13 +4089,13 @@ node
 fûe_off£t
 );
 
-1012 
+1031 
 NodePage
  
 ∑ª¡_node
 ;
 
-1013 
+1032 
 	`lﬂd_∑ge
 (
 node_∑ge
@@ -4035,7 +4107,7 @@ Page
 ∑ª¡_node
 );
 
-1014 
+1033 
 	`dñëe_íåy
 (&
 ∑ª¡_node
@@ -4043,11 +4115,11 @@ Page
 k_¥ime
 );
 
-1015 
+1034 
 	}
 }
 
-1023 
+1042 
 	$ªdi°ribuã_nodes
 (
 NodePage
@@ -4057,31 +4129,31 @@ node_∑ge
 √ighb‹_∑ge
 ,
 
-1024 
+1043 
 √ighb‹_ödex
 ,
 
-1025 
+1044 
 k_¥ime_ödex
 , 
 k_¥ime
 ) {
 
-1027 
+1046 
 i
 ;
 
-1034 i‡(
+1053 i‡(
 √ighb‹_ödex
  != -1) {
 
-1035 i‡(!
+1054 i‡(!
 node_∑ge
 ->
 is_Àaf
 ) {
 
-1036 
+1055 
 I¡î«lPage
 * 
 node
@@ -4089,7 +4161,7 @@ node
 node_∑ge
 ;
 
-1037 
+1056 
 I¡î«lPage
 * 
 √ighb‹_node
@@ -4097,7 +4169,7 @@ I¡î«lPage
 √ighb‹_∑ge
 ;
 
-1038 
+1057 
 	`INTERNAL_OFFSET
 (
 node
@@ -4105,7 +4177,7 @@ node
 num_keys
  + 1) = INTERNAL_OFFSET(node,Çode->num_keys);
 
-1040 
+1059 
 i
  = 
 node
@@ -4113,7 +4185,7 @@ node
 num_keys
 ; i > 0; i--) {
 
-1041 
+1060 
 	`INTERNAL_KEY
 (
 node
@@ -4121,7 +4193,7 @@ node
 i
 ) = INTERNAL_KEY(node, i - 1);
 
-1042 
+1061 
 	`INTERNAL_OFFSET
 (
 node
@@ -4129,7 +4201,7 @@ node
 i
 ) = INTERNAL_OFFSET(node, i - 1);
 
-1044 
+1063 
 	`INTERNAL_OFFSET
 (
 node
@@ -4139,13 +4211,13 @@ node
 num_keys
 );
 
-1045 
+1064 
 NodePage
  
 chûd_∑ge
 ;
 
-1046 
+1065 
 	`lﬂd_∑ge
 (
 	`INTERNAL_OFFSET
@@ -4157,7 +4229,7 @@ Page
 chûd_∑ge
 );
 
-1047 
+1066 
 chûd_∑ge
 .
 ∑ª¡
@@ -4167,7 +4239,7 @@ node
 fûe_off£t
 ;
 
-1048 
+1067 
 	`Êush_∑ge
 ((
 Page
@@ -4175,7 +4247,7 @@ Page
 chûd_∑ge
 );
 
-1050 
+1069 
 	`INTERNAL_OFFSET
 (
 √ighb‹_node
@@ -4183,7 +4255,7 @@ chûd_∑ge
 num_keys
 ) = 0;
 
-1051 
+1070 
 	`INTERNAL_KEY
 (
 node
@@ -4191,13 +4263,13 @@ node
 k_¥ime
 ;
 
-1053 
+1072 
 I¡î«lPage
  
 ∑ª¡_node
 ;
 
-1054 
+1073 
 	`lﬂd_∑ge
 (
 node
@@ -4209,7 +4281,7 @@ Page
 ∑ª¡_node
 );
 
-1055 
+1074 
 	`INTERNAL_KEY
 (&
 ∑ª¡_node
@@ -4221,7 +4293,7 @@ k_¥ime_ödex
 num_keys
  - 1);
 
-1056 
+1075 
 	`Êush_∑ge
 ((
 Page
@@ -4229,19 +4301,19 @@ Page
 ∑ª¡_node
 );
 
-1061 
+1080 
 node
 ->
 num_keys
 ++;
 
-1062 
+1081 
 √ighb‹_node
 ->
 num_keys
 --;
 
-1064 
+1083 
 	`Êush_∑ge
 ((
 Page
@@ -4249,7 +4321,7 @@ Page
 node_∑ge
 );
 
-1065 
+1084 
 	`Êush_∑ge
 ((
 Page
@@ -4257,7 +4329,7 @@ Page
 √ighb‹_∑ge
 );
 
-1068 
+1087 
 LófPage
 * 
 node
@@ -4265,7 +4337,7 @@ node
 node_∑ge
 ;
 
-1069 
+1088 
 LófPage
 * 
 √ighb‹_node
@@ -4273,7 +4345,7 @@ LófPage
 √ighb‹_∑ge
 ;
 
-1071 
+1090 
 i
  = 
 node
@@ -4281,7 +4353,7 @@ node
 num_keys
 ; i > 0; i--) {
 
-1072 
+1091 
 	`LEAF_KEY
 (
 node
@@ -4289,7 +4361,7 @@ node
 i
 ) = LEAF_KEY(node, i - 1);
 
-1073 
+1092 
 	`mem˝y
 (
 	`LEAF_VALUE
@@ -4301,7 +4373,7 @@ i
 SIZE_VALUE
 );
 
-1075 
+1094 
 	`mem˝y
 (
 	`LEAF_VALUE
@@ -4315,7 +4387,7 @@ num_keys
 SIZE_VALUE
 );
 
-1076 
+1095 
 	`mem£t
 (
 	`LEAF_VALUE
@@ -4327,7 +4399,7 @@ num_keys
 SIZE_VALUE
 );
 
-1077 
+1096 
 	`LEAF_KEY
 (
 node
@@ -4337,13 +4409,13 @@ node
 num_keys
  - 1);
 
-1079 
+1098 
 I¡î«lPage
  
 ∑ª¡_node
 ;
 
-1080 
+1099 
 	`lﬂd_∑ge
 (
 node
@@ -4355,7 +4427,7 @@ Page
 ∑ª¡_node
 );
 
-1081 
+1100 
 	`INTERNAL_KEY
 (&
 ∑ª¡_node
@@ -4367,7 +4439,7 @@ k_¥ime_ödex
 node
 , 0);
 
-1082 
+1101 
 	`Êush_∑ge
 ((
 Page
@@ -4375,19 +4447,19 @@ Page
 ∑ª¡_node
 );
 
-1087 
+1106 
 node
 ->
 num_keys
 ++;
 
-1088 
+1107 
 √ighb‹_node
 ->
 num_keys
 --;
 
-1090 
+1109 
 	`Êush_∑ge
 ((
 Page
@@ -4395,7 +4467,7 @@ Page
 node_∑ge
 );
 
-1091 
+1110 
 	`Êush_∑ge
 ((
 Page
@@ -4403,13 +4475,13 @@ Page
 √ighb‹_∑ge
 );
 
-1102 i‡(
+1121 i‡(
 node_∑ge
 ->
 is_Àaf
 ) {
 
-1103 
+1122 
 LófPage
 * 
 node
@@ -4417,7 +4489,7 @@ node
 node_∑ge
 ;
 
-1104 
+1123 
 LófPage
 * 
 √ighb‹_node
@@ -4425,7 +4497,7 @@ LófPage
 √ighb‹_∑ge
 ;;
 
-1106 
+1125 
 	`LEAF_KEY
 (
 node
@@ -4435,7 +4507,7 @@ num_keys
 √ighb‹_node
 , 0);
 
-1107 
+1126 
 	`mem˝y
 (
 	`LEAF_VALUE
@@ -4449,13 +4521,13 @@ num_keys
 SIZE_VALUE
 );
 
-1109 
+1128 
 I¡î«lPage
  
 ∑ª¡_node
 ;
 
-1110 
+1129 
 	`lﬂd_∑ge
 (
 node
@@ -4467,7 +4539,7 @@ Page
 ∑ª¡_node
 );
 
-1111 
+1130 
 	`INTERNAL_KEY
 (&
 ∑ª¡_node
@@ -4479,7 +4551,7 @@ k_¥ime_ödex
 √ighb‹_node
 , 1);
 
-1112 
+1131 
 	`Êush_∑ge
 ((
 Page
@@ -4487,7 +4559,7 @@ Page
 ∑ª¡_node
 );
 
-1114 
+1133 
 i
  = 0; i < 
 √ighb‹_node
@@ -4495,7 +4567,7 @@ i
 num_keys
  - 1; i++) {
 
-1115 
+1134 
 	`LEAF_KEY
 (
 √ighb‹_node
@@ -4503,7 +4575,7 @@ num_keys
 i
 ) = LEAF_KEY(neighbor_node, i + 1);
 
-1116 
+1135 
 	`mem˝y
 (
 	`LEAF_VALUE
@@ -4515,19 +4587,19 @@ i
 SIZE_VALUE
 );
 
-1122 
+1141 
 node
 ->
 num_keys
 ++;
 
-1123 
+1142 
 √ighb‹_node
 ->
 num_keys
 --;
 
-1125 
+1144 
 	`Êush_∑ge
 ((
 Page
@@ -4535,7 +4607,7 @@ Page
 node_∑ge
 );
 
-1126 
+1145 
 	`Êush_∑ge
 ((
 Page
@@ -4543,7 +4615,7 @@ Page
 √ighb‹_∑ge
 );
 
-1130 
+1149 
 I¡î«lPage
 * 
 node
@@ -4551,7 +4623,7 @@ node
 node_∑ge
 ;
 
-1131 
+1150 
 I¡î«lPage
 * 
 √ighb‹_node
@@ -4559,7 +4631,7 @@ I¡î«lPage
 √ighb‹_∑ge
 ;
 
-1133 
+1152 
 	`INTERNAL_KEY
 (
 node
@@ -4569,7 +4641,7 @@ num_keys
 k_¥ime
 ;
 
-1134 
+1153 
 	`INTERNAL_OFFSET
 (
 node
@@ -4579,13 +4651,13 @@ num_keys
 √ighb‹_node
 , 0);
 
-1136 
+1155 
 NodePage
  
 chûd_∑ge
 ;
 
-1137 
+1156 
 	`lﬂd_∑ge
 (
 	`INTERNAL_OFFSET
@@ -4599,7 +4671,7 @@ Page
 chûd_∑ge
 );
 
-1138 
+1157 
 chûd_∑ge
 .
 ∑ª¡
@@ -4609,7 +4681,7 @@ node
 fûe_off£t
 ;
 
-1139 
+1158 
 	`Êush_∑ge
 ((
 Page
@@ -4617,13 +4689,13 @@ Page
 chûd_∑ge
 );
 
-1141 
+1160 
 I¡î«lPage
  
 ∑ª¡_node
 ;
 
-1142 
+1161 
 	`lﬂd_∑ge
 (
 node
@@ -4635,7 +4707,7 @@ Page
 ∑ª¡_node
 );
 
-1143 
+1162 
 	`INTERNAL_KEY
 (&
 ∑ª¡_node
@@ -4645,7 +4717,7 @@ k_¥ime_ödex
 √ighb‹_node
 , 0);
 
-1144 
+1163 
 	`Êush_∑ge
 ((
 Page
@@ -4653,7 +4725,7 @@ Page
 ∑ª¡_node
 );
 
-1146 
+1165 
 i
  = 0; i < 
 √ighb‹_node
@@ -4661,7 +4733,7 @@ i
 num_keys
  - 1; i++) {
 
-1147 
+1166 
 	`INTERNAL_KEY
 (
 √ighb‹_node
@@ -4669,7 +4741,7 @@ num_keys
 i
 ) = INTERNAL_KEY(neighbor_node, i + 1);
 
-1148 
+1167 
 	`INTERNAL_OFFSET
 (
 √ighb‹_node
@@ -4677,7 +4749,7 @@ i
 i
 ) = INTERNAL_OFFSET(neighbor_node, i + 1);
 
-1151 
+1170 
 	`INTERNAL_OFFSET
 (
 √ighb‹_node
@@ -4685,19 +4757,19 @@ i
 i
 ) = INTERNAL_OFFSET(neighbor_node, i + 1);
 
-1158 
+1177 
 node
 ->
 num_keys
 ++;
 
-1159 
+1178 
 √ighb‹_node
 ->
 num_keys
 --;
 
-1161 
+1180 
 	`Êush_∑ge
 ((
 Page
@@ -4705,7 +4777,7 @@ Page
 node_∑ge
 );
 
-1162 
+1181 
 	`Êush_∑ge
 ((
 Page
@@ -4713,11 +4785,11 @@ Page
 √ighb‹_∑ge
 );
 
-1166 
+1185 
 	}
 }
 
-1174 
+1193 
 	$dñëe_íåy
 (
 NodePage
@@ -4729,31 +4801,31 @@ uöt64_t
 key
 ) {
 
-1176 
+1195 
 mö_keys
 ;
 
-1177 
+1196 
 off_t
  
 √ighb‹_off£t
 ;
 
-1178 
+1197 
 √ighb‹_ödex
 ;
 
-1179 
+1198 
 k_¥ime_ödex
 , 
 k_¥ime
 ;
 
-1180 
+1199 
 ˇ∑côy
 ;
 
-1184 
+1203 
 	`ªmove_íåy_‰om_node
 (
 node_∑ge
@@ -4761,7 +4833,7 @@ node_∑ge
 key
 );
 
-1188 i‡(
+1207 i‡(
 dbhódî
 .
 roŸ_off£t
@@ -4771,11 +4843,11 @@ node_∑ge
 fûe_off£t
 ) {
 
-1189 
+1208 
 	`adju°_roŸ
 ();
 
-1201 
+1220 
 mö_keys
  = 
 node_∑ge
@@ -4789,7 +4861,7 @@ is_Àaf
 ‹dî_öã∫Æ
 ) - 1;
 
-1207 i‡(
+1226 i‡(
 node_∑ge
 ->
 num_keys
@@ -4797,7 +4869,7 @@ num_keys
 mö_keys
 )
 
-1222 
+1241 
 √ighb‹_ödex
  = 
 	`gë_√ighb‹_ödex
@@ -4805,19 +4877,19 @@ mö_keys
 node_∑ge
 );
 
-1223 
+1242 
 k_¥ime_ödex
  = 
 √ighb‹_ödex
  == -1 ? 0 :Çeighbor_index;
 
-1225 
+1244 
 I¡î«lPage
  
 ∑ª¡_node
 ;
 
-1226 
+1245 
 	`lﬂd_∑ge
 (
 node_∑ge
@@ -4829,7 +4901,7 @@ Page
 ∑ª¡_node
 );
 
-1228 
+1247 
 k_¥ime
  = 
 	`INTERNAL_KEY
@@ -4839,7 +4911,7 @@ k_¥ime
 k_¥ime_ödex
 );
 
-1229 
+1248 
 √ighb‹_off£t
  = 
 √ighb‹_ödex
@@ -4849,7 +4921,7 @@ k_¥ime_ödex
 ∑ª¡_node
 , 1) :
 
-1230 
+1249 
 	`INTERNAL_OFFSET
 (&
 ∑ª¡_node
@@ -4857,7 +4929,7 @@ k_¥ime_ödex
 √ighb‹_ödex
 );
 
-1232 
+1251 
 ˇ∑côy
  = 
 node_∑ge
@@ -4869,13 +4941,13 @@ is_Àaf
 ‹dî_öã∫Æ
  - 1;
 
-1234 
+1253 
 NodePage
  
 √ighb‹_∑ge
 ;
 
-1235 
+1254 
 	`lﬂd_∑ge
 (
 √ighb‹_off£t
@@ -4885,7 +4957,7 @@ Page
 √ighb‹_∑ge
 );
 
-1238 i‡(
+1257 i‡(
 √ighb‹_∑ge
 .
 num_keys
@@ -4895,7 +4967,7 @@ node_∑ge
 ˇ∑côy
 )
 
-1239 
+1258 
 	`cﬂÀs˚_nodes
 (
 node_∑ge
@@ -4907,7 +4979,7 @@ node_∑ge
 k_¥ime
 );
 
-1244 
+1263 
 	`ªdi°ribuã_nodes
 (
 node_∑ge
@@ -4921,25 +4993,27 @@ k_¥ime_ödex
 k_¥ime
 );
 
-1247 
+1266 
 	}
 }
 
-1251 
+1270 
 	$dñëe
-(
+(
+èbÀ_id
+, 
 uöt64_t
  
 key
 ) {
 
-1253 * 
+1272 * 
 vÆue_found
  = 
 NULL
 ;
 
-1254 i‡((
+1273 i‡((
 vÆue_found
  = 
 	`föd
@@ -4947,19 +5021,19 @@ vÆue_found
 key
 )) == 0) {
 
-1256 
+1275 
 	`‰ì
 (
 vÆue_found
 );
 
-1260 
+1279 
 LófPage
  
 Àaf_node
 ;
 
-1261 
+1280 
 	`föd_Àaf
 (
 key
@@ -4967,7 +5041,7 @@ key
 Àaf_node
 );
 
-1263 
+1282 
 	`dñëe_íåy
 ((
 NodePage
@@ -4977,7 +5051,161 @@ NodePage
 key
 );
 
-1266 
+1285 
+	}
+}
+
+1288 
+	$öô_db
+(
+num_buf
+){
+
+1290 
+buf_mgr
+ = (
+Buf„r
+ *)
+	`ˇŒoc
+(
+num_buf
+, (Buffer));
+
+1292 if(
+buf_mgr
+ =
+NULL
+){
+
+1298 
+buf_size
+ = 
+num_buf
+;
+
+1301 
+	}
+}
+
+1303 
+	$˛o£_èbÀ
+(
+èbÀ_id
+){
+
+1304 
+i
+;
+
+1307 if(
+èbÀ_id
+ < 1 ||ÅabÀ_id > 10 || 
+buf_size
+ =-1 || 
+buf_mgr
+ =
+NULL
+){
+
+1311 
+i
+ = 0; i < 
+buf_size
+; i++){
+
+1312 if(
+buf_mgr
+[
+i
+].
+èbÀ_id
+ ==Åable_id){
+
+1314 if(
+buf_mgr
+[
+i
+].
+is_dúty
+ == 1){
+
+1315 
+	`Êush_∑ge
+(
+buf_mgr
+[
+i
+].
+‰ame
+);
+
+1318 
+	`mem£t
+(
+buf_mgr
++
+i
+, 0, (
+Buf„r
+));
+
+1323 
+èbÀ_ids
+[
+èbÀ_id
+ -1] = 0;
+
+1326 
+	}
+}
+
+1328 
+	$shutdown_db
+(){
+
+1329 
+i
+;
+
+1332 if(
+buf_size
+ =-1 || 
+buf_mgr
+ =
+NULL
+){
+
+1336 
+i
+ = 0; i < 
+buf_size
+; i++){
+
+1338 if(
+buf_mgr
+[
+i
+].
+is_dúty
+ == 1){
+
+1339 
+	`Êush_∑ge
+(
+buf_mgr
+[
+i
+].
+‰ame
+);
+
+1344 
+	`‰ì
+(
+buf_mgr
+);
+
+1347 
 	}
 }
 
@@ -5019,11 +5247,11 @@ key
 HódîPage
  
 	gdbhódî
-;
+[10];
 
 11 
 	gdbfûe
-;
+[10];
 
 15 
 off_t

@@ -128,9 +128,9 @@ void load_page(off_t offset, Page* page);
 // Flush page into the file
 void flush_page(Page* page);
 
-extern HeaderPage dbheader;
+extern HeaderPage dbheader[10];
 
-/* Project buffer */
+/* Project Buffer */
 // LRU clock structure
 typedef struct _LRU_clock{
     int clock_hand;
