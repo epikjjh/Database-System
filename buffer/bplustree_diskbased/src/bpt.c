@@ -115,6 +115,7 @@ bool verbose_output = false;
 /* Project Buffer : GLOBALS */
 Buffer *buf_mgr;
 int buf_size = -1;
+int clock_hand = 0;
 
 // FUNCTION PROTOTYPES.
 
@@ -124,28 +125,28 @@ void license_notice( void );
 void print_license( int licence_part );
 void usage_1( void );
 void usage_2( void );
-void find_and_print(uint64_t key); 
-bool find_leaf(uint64_t key, LeafPage* out_leaf_node);
+void find_and_print(int table_id, uint64_t key); 
+bool find_leaf(int table_id, uint64_t key, LeafPage* out_leaf_node);
 
 // Insertion.
-void start_new_tree(uint64_t key, const char* value);
-void insert_into_leaf(LeafPage* leaf_node, uint64_t key, const char* value);
-void insert_into_leaf_after_splitting(LeafPage* leaf_node, uint64_t key, const char* value);
-void insert_into_parent(NodePage* left, uint64_t key, NodePage* right);
-void insert_into_new_root(NodePage* left, uint64_t key, NodePage* right);
+void start_new_tree(int table_id, uint64_t key, const char* value);
+void insert_into_leaf(int talbe_id, LeafPage* leaf_node, uint64_t key, const char* value);
+void insert_into_leaf_after_splitting(int table_id, LeafPage* leaf_node, uint64_t key, const char* value);
+void insert_into_parent(int table_id, NodePage* left, uint64_t key, NodePage* right);
+void insert_into_new_root(int table_id, NodePage* left, uint64_t key, NodePage* right);
 int get_left_index(InternalPage* parent, off_t left_offset);
 void insert_into_node(InternalPage * parent, int left_index, uint64_t key, off_t right_offset);
-void insert_into_node_after_splitting(InternalPage* parent, int left_index, uint64_t key, off_t right_offset);
+void insert_into_node_after_splitting(int table_id, InternalPage* parent, int left_index, uint64_t key, off_t right_offset);
 
 // Deletion.
-int get_neighbor_index(NodePage* node_page);
-void adjust_root();
-void coalesce_nodes(NodePage* node_page, NodePage* neighbor_page,
+int get_neighbor_index(int table_id, NodePage* node_page);
+void adjust_root(int table_id);
+void coalesce_nodes(int table_id, NodePage* node_page, NodePage* neighbor_page,
                       int neighbor_index, int k_prime);
-void redistribute_nodes(NodePage* node_page, NodePage* neighbor_page,
+void redistribute_nodes(int table_id, NodePage* node_page, NodePage* neighbor_page,
                           int neighbor_index,
                           int k_prime_index, int k_prime);
-void delete_entry(NodePage* node_page, uint64_t key);
+void delete_entry(int table_id, NodePage* node_page, uint64_t key);
 
 
 // FUNCTION DEFINITIONS.
@@ -274,8 +275,8 @@ int open_table(const char* filename) {
 }
 
 // Not used in project buffer : Replaced by close_table function
-void close_db() {
-    close(dbfile[i]);
+void close_db(int table_id) {
+    close(dbfile[table_id - 1]);
 }
 
 /* Helper function for printing the
@@ -292,18 +293,18 @@ void close_db() {
  */
 
 off_t queue[BPTREE_MAX_NODE];
-void print_tree() {
+void print_tree(int table_id) {
 
     int i;
     int front = 0;
     int rear = 0;
 
-    if (dbheader.root_offset == 0) {
+    if (dbheader[table_id - 1].root_offset == 0) {
 		printf("Empty tree.\n");
         return;
     }
 
-    queue[rear] = dbheader.root_offset;
+    queue[rear] = dbheader[table_id - 1].root_offset;
     rear++;
     queue[rear] = 0;
     rear++;
@@ -323,7 +324,7 @@ void print_tree() {
         }
         
         NodePage node_page;
-        load_page(page_offset, (Page*)&node_page);
+        load_page(table_id, page_offset, (Page*)&node_page);
         if (node_page.is_leaf == 1) {
             // leaf node
             LeafPage* leaf_node = (LeafPage*)&node_page;
@@ -349,9 +350,9 @@ void print_tree() {
 /* Finds the record under a given key and prints an
  * appropriate message to stdout.
  */
-void find_and_print(uint64_t key) {
+void find_and_print(int table_id, uint64_t key) {
     char* value_found = NULL;
-	value_found = find(key);
+	value_found = find(table_id, key);
 	if (value_found == NULL) {
 		printf("Record not found under key %" PRIu64 ".\n", key);
     }
@@ -366,16 +367,16 @@ void find_and_print(uint64_t key) {
  * if the verbose flag is set.
  * Returns the leaf containing the given key.
  */
-bool find_leaf(uint64_t key, LeafPage* out_leaf_node) {
+bool find_leaf(int table_id, uint64_t key, LeafPage* out_leaf_node) {
     int i = 0;
-    off_t root_offset = dbheader.root_offset;
+    off_t root_offset = dbheader[table_id - 1].root_offset;
 
 	if (root_offset == 0) {
 		return false;
 	}
     
     NodePage page;
-    load_page(root_offset, (Page*)&page);
+    load_page(table_id, root_offset, (Page*)&page);
 
 	while (!page.is_leaf) {
         InternalPage* internal_node = (InternalPage*)&page;
@@ -386,7 +387,7 @@ bool find_leaf(uint64_t key, LeafPage* out_leaf_node) {
 			else break;
 		}
         
-        load_page(INTERNAL_OFFSET(internal_node, i), (Page*)&page);
+        load_page(table_id, INTERNAL_OFFSET(internal_node, i), (Page*)&page);
 	}
 
     memcpy(out_leaf_node, &page, sizeof(LeafPage));
@@ -403,7 +404,7 @@ char* find(int table_id, uint64_t key) {
     char* out_value;
 
     LeafPage leaf_node;
-    if (!find_leaf(key, &leaf_node)) {
+    if (!find_leaf(table_id, key, &leaf_node)) {
         return NULL;
     }
 
@@ -446,7 +447,7 @@ int get_left_index(InternalPage* parent, off_t left_offset) {
  * key into a leaf.
  * Returns the altered leaf.
  */
-void insert_into_leaf(LeafPage* leaf_node, uint64_t key, const char* value) {
+void insert_into_leaf(int table_id, LeafPage* leaf_node, uint64_t key, const char* value) {
 	int insertion_point;
     int i;
 
@@ -474,7 +475,7 @@ void insert_into_leaf(LeafPage* leaf_node, uint64_t key, const char* value) {
  * the tree's order, causing the leaf to be split
  * in half.
  */
-void insert_into_leaf_after_splitting(LeafPage* leaf, uint64_t key, const char* value) {
+void insert_into_leaf_after_splitting(int table_id, LeafPage* leaf, uint64_t key, const char* value) {
 
 	int insertion_index, split, i, j;
     uint64_t new_key;
@@ -550,7 +551,7 @@ void insert_into_leaf_after_splitting(LeafPage* leaf, uint64_t key, const char* 
 	new_key = LEAF_KEY(&new_leaf, 0);
 
     // insert new key and new leaf to the parent
-	insert_into_parent((NodePage*)leaf, new_key, (NodePage*)&new_leaf);
+	insert_into_parent(table_id, (NodePage*)leaf, new_key, (NodePage*)&new_leaf);
 }
 
 /* Inserts a new key and pointer to a node
@@ -573,7 +574,7 @@ void insert_into_node(InternalPage* n, int left_index, uint64_t key, off_t right
  * into a node, causing the node's size to exceed
  * the order, and causing the node to split into two.
  */
-void insert_into_node_after_splitting(InternalPage* old_node, int left_index, uint64_t key, off_t right_offset) {
+void insert_into_node_after_splitting(int table_id, InternalPage* old_node, int left_index, uint64_t key, off_t right_offset) {
     int i, j, split, k_prime;
 	uint64_t* temp_keys;
 	off_t* temp_pointers;
@@ -665,19 +666,19 @@ void insert_into_node_after_splitting(InternalPage* old_node, int left_index, ui
 	 * nodes resulting from the split, with
 	 * the old node to the left and the new to the right.
 	 */
-	insert_into_parent((NodePage*)old_node, k_prime, (NodePage*)&new_node);
+	insert_into_parent(table_id, (NodePage*)old_node, k_prime, (NodePage*)&new_node);
 }
 
 /* Inserts a new node (leaf or internal node) into the B+ tree.
  * Returns the root of the tree after insertion.
  */
-void insert_into_parent(NodePage* left, uint64_t key, NodePage* right) {
+void insert_into_parent(int table_id, NodePage* left, uint64_t key, NodePage* right) {
 	//off_t left_index;
     InternalPage parent_node;
 
     /* Case: new root. */
 	if (left->parent == 0) {
-		insert_into_new_root(left, key, right);
+		insert_into_new_root(table_id, left, key, right);
         return;
     }
 
@@ -706,14 +707,14 @@ void insert_into_parent(NodePage* left, uint64_t key, NodePage* right) {
 	 * to preserve the B+ tree properties.
 	 */
 
-	return insert_into_node_after_splitting(&parent_node, left_index, key, right->file_offset);
+	return insert_into_node_after_splitting(table_id, &parent_node, left_index, key, right->file_offset);
 }
 
 /* Creates a new root for two subtrees
  * and inserts the appropriate key into
  * the new root.
  */
-void insert_into_new_root(NodePage* left, uint64_t key, NodePage* right) {
+void insert_into_new_root(int table_id, NodePage* left, uint64_t key, NodePage* right) {
     // make new root node
     InternalPage root_node;
     memset(&root_node, 0, sizeof(InternalPage));
@@ -731,13 +732,13 @@ void insert_into_new_root(NodePage* left, uint64_t key, NodePage* right) {
     flush_page((Page*)left);
     flush_page((Page*)right);
 
-    dbheader.root_offset = root_node.file_offset;
+    dbheader[table_id - 1].root_offset = root_node.file_offset;
     flush_page((Page*)&dbheader);
 }
 /* First insertion:
  * start a new tree.
  */
-void start_new_tree(uint64_t key, const char* value) {
+void start_new_tree(int table_id, uint64_t key, const char* value) {
     LeafPage root_node;
     
     off_t root_offset = get_free_page();
@@ -752,7 +753,7 @@ void start_new_tree(uint64_t key, const char* value) {
     
     flush_page((Page*)&root_node);
 
-    dbheader.root_offset = root_offset;
+    dbheader[table_id - 1].root_offset = root_offset;
     flush_page((Page*)&dbheader);
 }
 
@@ -768,7 +769,7 @@ int insert(int table_id, uint64_t key, const char* value) {
 	 */
     char* value_found = NULL;
 
-    if ((value_found = find(key)) != 0) {
+    if ((value_found = find(table_id, key)) != 0) {
         free(value_found);
         return -1;
     }
@@ -776,8 +777,8 @@ int insert(int table_id, uint64_t key, const char* value) {
 	 * Start a new tree.
 	 */
 
-	if (dbheader.root_offset == 0) {
-		start_new_tree(key, value);
+	if (dbheader[table_id - 1].root_offset == 0) {
+		start_new_tree(table_id, key, value);
         return 0;
     }
 	
@@ -786,7 +787,7 @@ int insert(int table_id, uint64_t key, const char* value) {
 	 */
 
     LeafPage leaf_node;
-    find_leaf(key, &leaf_node);
+    find_leaf(table_id, key, &leaf_node);
 
 	/* Case: leaf has room for key and pointer.
 	 */
@@ -796,7 +797,7 @@ int insert(int table_id, uint64_t key, const char* value) {
 	} else {
     	/* Case:  leaf must be split.
 	     */
-        insert_into_leaf_after_splitting(&leaf_node, key, value);
+        insert_into_leaf_after_splitting(table_id, &leaf_node, key, value);
     }
     return 0;
 }
@@ -809,7 +810,7 @@ int insert(int table_id, uint64_t key, const char* value) {
  * is the leftmost child), returns -1 to signify
  * this special case.
  */
-int get_neighbor_index(NodePage* node_page) {
+int get_neighbor_index(int table_id, NodePage* node_page) {
 
 	int i;
 
@@ -820,7 +821,7 @@ int get_neighbor_index(NodePage* node_page) {
 	 * return -1.
 	 */
     InternalPage parent_node;
-    load_page(node_page->parent, (Page*)&parent_node);
+    load_page(table_id, node_page->parent, (Page*)&parent_node);
 	for (i = 0; i <= parent_node.num_keys; i++)
 		if (INTERNAL_OFFSET(&parent_node, i) == node_page->file_offset)
 			return i - 1;
@@ -889,10 +890,10 @@ void remove_entry_from_node(NodePage* node_page, uint64_t key) {
     flush_page((Page*)node_page);
 }
 
-void adjust_root() {
+void adjust_root(int table_id) {
 
     NodePage root_page;
-    load_page(dbheader.root_offset, (Page*)&root_page);
+    load_page(dbheader[table_id - 1].root_offset, (Page*)&root_page);
 
 	/* Case: nonempty root.
 	 * Key and pointer have already been deleted,
@@ -911,10 +912,10 @@ void adjust_root() {
 
 	if (!root_page.is_leaf) {
         InternalPage* root_node = (InternalPage*)&root_page;
-        dbheader.root_offset = INTERNAL_OFFSET(root_node, 0);
+        dbheader[table_id - 1].root_offset = INTERNAL_OFFSET(root_node, 0);
 		
         NodePage node_page;
-        load_page(dbheader.root_offset, (Page*)&node_page);
+        load_page(table_id, dbheader[table_id - 1].root_offset, (Page*)&node_page);
         node_page.parent = 0;
 
         flush_page((Page*)&node_page);
@@ -925,11 +926,11 @@ void adjust_root() {
 	// then the whole tree is empty.
 
 	else {
-        dbheader.root_offset = 0;
+        dbheader[table_id - 1].root_offset = 0;
         flush_page((Page*)&dbheader);
     }
 
-    put_free_page(root_page.file_offset);
+    put_free_page(table_id, root_page.file_offset);
 }
 
 /* Coalesces a node that has become
@@ -938,7 +939,7 @@ void adjust_root() {
  * can accept the additional entries
  * without exceeding the maximum.
  */
-void coalesce_nodes(NodePage* node_page, NodePage* neighbor_page, int neighbor_index, int k_prime) {
+void coalesce_nodes(int table_id, NodePage* node_page, NodePage* neighbor_page, int neighbor_index, int k_prime) {
 
 	int i, j, neighbor_insertion_index, n_end;
 	NodePage* tmp;
@@ -1030,7 +1031,7 @@ void coalesce_nodes(NodePage* node_page, NodePage* neighbor_page, int neighbor_i
 
     NodePage parent_node;
     load_page(node_page->parent, (Page*)&parent_node);
-	delete_entry(&parent_node, k_prime);
+	delete_entry(table_id, &parent_node, k_prime);
 }
 
 /* Redistributes entries between two nodes when
@@ -1039,7 +1040,7 @@ void coalesce_nodes(NodePage* node_page, NodePage* neighbor_page, int neighbor_i
  * small node's entries without exceeding the
  * maximum
  */
-void redistribute_nodes(NodePage* node_page, NodePage* neighbor_page,
+void rdistribute_nodes(int table_id, NodePage* node_page, NodePage* neighbor_page,
                         int neighbor_index, 
 		                int k_prime_index, int k_prime) {  
 
@@ -1190,7 +1191,7 @@ void redistribute_nodes(NodePage* node_page, NodePage* neighbor_page,
  * from the leaf, and then makes all appropriate
  * changes to preserve the B+ tree properties.
  */
-void delete_entry(NodePage* node_page, uint64_t key) {
+void delete_entry(int table_id, NodePage* node_page, uint64_t key) {
 
 	int min_keys;
 	off_t neighbor_offset;
@@ -1204,8 +1205,8 @@ void delete_entry(NodePage* node_page, uint64_t key) {
 	/* Case:  deletion from the root. 
 	 */
 
-	if (dbheader.root_offset == node_page->file_offset) {
-		adjust_root();
+	if (dbheader[table_id - 1].root_offset == node_page->file_offset) {
+		adjust_root(table_id);
         return;
     }
 
@@ -1238,11 +1239,11 @@ void delete_entry(NodePage* node_page, uint64_t key) {
 	 * to the neighbor.
 	 */
 
-	neighbor_index = get_neighbor_index(node_page);
+	neighbor_index = get_neighbor_index(table_id, node_page);
 	k_prime_index = neighbor_index == -1 ? 0 : neighbor_index;
 
     InternalPage parent_node;
-    load_page(node_page->parent, (Page*)&parent_node);
+    load_page(table_id, node_page->parent, (Page*)&parent_node);
 
 	k_prime = INTERNAL_KEY(&parent_node, k_prime_index);
 	neighbor_offset = neighbor_index == -1 ? INTERNAL_OFFSET(&parent_node, 1) : 
@@ -1251,16 +1252,16 @@ void delete_entry(NodePage* node_page, uint64_t key) {
 	capacity = node_page->is_leaf ? order_leaf : order_internal - 1;
 
     NodePage neighbor_page;
-    load_page(neighbor_offset, (Page*)&neighbor_page);
+    load_page(table_id, neighbor_offset, (Page*)&neighbor_page);
 	/* Coalescence. */
 
 	if (neighbor_page.num_keys + node_page->num_keys < capacity)
-		coalesce_nodes(node_page, &neighbor_page, neighbor_index, k_prime);
+		coalesce_nodes(table_id, node_page, &neighbor_page, neighbor_index, k_prime);
 
 	/* Redistribution. */
 
 	else
-		redistribute_nodes(node_page, &neighbor_page, neighbor_index, k_prime_index, k_prime);
+		redistribute_nodes(table_id, node_page, &neighbor_page, neighbor_index, k_prime_index, k_prime);
 
 
 }
@@ -1270,16 +1271,16 @@ void delete_entry(NodePage* node_page, uint64_t key) {
 int delete(int table_id, uint64_t key) {
 
     char* value_found = NULL;
-    if ((value_found = find(key)) == 0) {
+    if ((value_found = find(table_id, key)) == 0) {
         // This key is not in the tree
         free(value_found);
         return -1;
     }
 
     LeafPage leaf_node;
-    find_leaf(key, &leaf_node);
+    find_leaf(table_id, key, &leaf_node);
 
-    delete_entry((NodePage*)&leaf_node, key);
+    delete_entry(table_id, (NodePage*)&leaf_node, key);
 
     return 0;
 }
@@ -1312,7 +1313,7 @@ int close_table(int table_id){
         if(buf_mgr[i].table_id == table_id){
             // If dirty bit is on, write page.
             if(buf_mgr[i].is_dirty == 1){
-                flush_page(buf_mgr[i].frame);
+                flush_page(table_id, buf_mgr[i].frame);
             }
             // Reinitialize : Evict
             memset(buf_mgr+i, 0, sizeof(Buffer));
@@ -1326,7 +1327,7 @@ int close_table(int table_id){
 }
 
 int shutdown_db(){
-    int i;
+    int i,table_id = -1;
 
     // Failure case
     if(buf_size == -1 || buf_mgr == NULL){
@@ -1336,7 +1337,8 @@ int shutdown_db(){
     for(i = 0; i < buf_size; i++){
         // If dirty bit is on, write page.
         if(buf_mgr[i].is_dirty == 1){
-            flush_page(buf_mgr[i].frame);
+            table_id = buf_mgr[i].table_id;
+            flush_page(table_id, buf_mgr[i].frame);
         }
     }
 

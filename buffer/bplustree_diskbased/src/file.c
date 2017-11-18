@@ -12,44 +12,44 @@ int dbfile[10];
 
 // Get free page to use.
 // If no more free page exist, expand file
-off_t get_free_page() {
+off_t get_free_page(int table_id) {
     off_t freepage_offset;
     
-    freepage_offset = dbheader.freelist;
+    freepage_offset = dbheader[table_id - 1].freelist;
     if (freepage_offset == 0) {
         // No more free page, expand file as twice
-        expand_file(dbheader.num_pages);
-        freepage_offset = dbheader.freelist;
+        expand_file(dbheader[table_id - 1].num_pages);
+        freepage_offset = dbheader[table_id - 1].freelist;
     }
    
     FreePage freepage;
-    load_page(freepage_offset, (Page*)&freepage);
-    dbheader.freelist = freepage.next;
+    load_page(table_id, freepage_offset, (Page*)&freepage);
+    dbheader[table_id - 1].freelist = freepage.next;
     
-    flush_page((Page*)&dbheader);
+    flush_page(table_id, (Page*)(dbheader + table_id - 1));
     
     return freepage_offset;
 }
 
 // Put free page to the free list
-void put_free_page(off_t page_offset) {
+void put_free_page(int table_id, off_t page_offset) {
     FreePage freepage;
     memset(&freepage, 0, PAGE_SIZE);
 
-    freepage.next = dbheader.freelist;
+    freepage.next = dbheader[table_id - 1].freelist;
     freepage.file_offset = page_offset;
-    flush_page((Page*)&freepage);
+    flush_page(table_id, (Page*)&freepage);
     
-    dbheader.freelist = page_offset;
+    dbheader[table_id - 1].freelist = page_offset;
 
-    flush_page((Page*)&dbheader);
+    flush_page(table_id, (Page*)(dbheader + table_id - 1);
 }
 
 // Expand file pages and prepend them to the free list
-void expand_file(size_t cnt_page_to_expand) {
-    off_t offset = dbheader.num_pages * PAGE_SIZE;
+void expand_file(int table_id, size_t cnt_page_to_expand) {
+    off_t offset = dbheader[table_id - 1].num_pages * PAGE_SIZE;
 
-    if (dbheader.num_pages > 1024 * 1024) {
+    if (dbheader[table_id - 1].num_pages > 1024 * 1024) {
         // Test code: do not expand over than 4GB
         assert("Test: you are already having a DB file over than 4GB");
     }
@@ -57,20 +57,20 @@ void expand_file(size_t cnt_page_to_expand) {
     int i;
     for (i = 0; i < cnt_page_to_expand; i++) {
         put_free_page(offset);
-        dbheader.num_pages++;
+        dbheader[table_id - 1].num_pages++;
         offset += PAGE_SIZE;
     }
 
-    flush_page((Page*)&dbheader);
+    flush_page(table_id, (Page*)(dbheader + table_id - 1);
 }
 
-void load_page(off_t offset, Page* page) {
-    lseek(dbfile, offset, SEEK_SET);
-    read(dbfile, page, PAGE_SIZE);
+void load_page(int table_id, off_t offset, Page* page) {
+    lseek(dbfile[table_id - 1], offset, SEEK_SET);
+    read(dbfile[table_id - 1], page, PAGE_SIZE);
     page->file_offset = offset;
 }
 
-void flush_page(Page* page) {
-    lseek(dbfile, page->file_offset, SEEK_SET);
-    write(dbfile, page, PAGE_SIZE);
+void flush_page(int table_id, Page* page) {
+    lseek(dbfile[table_id - 1], page->file_offset, SEEK_SET);
+    write(dbfile[table_id - 1], page, PAGE_SIZE);
 }

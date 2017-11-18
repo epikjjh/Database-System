@@ -111,32 +111,27 @@ typedef struct _NodePage {
 int open_table(const char* filename);
 
 // Close a db file
-void close_db();
+// Not used in project buffer : Replaced by close_table function
+void close_db(int table_id);
 
 // Get free page to use
-off_t get_free_page();
+off_t get_free_page(int table_id);
 
 // Put free page to the free list
-void put_free_page(off_t page_offset);
+void put_free_page(int table_id, off_t page_offset);
 
 // Expand file size and prepend pages to the free list
-void expand_file(size_t cnt_page_to_expand);
+void expand_file(int table_id, size_t cnt_page_to_expand);
 
 // Load file page into the in-memory page
-void load_page(off_t offset, Page* page);
+void load_page(int table_id, off_t offset, Page* page);
 
 // Flush page into the file
-void flush_page(Page* page);
+void flush_page(int table_id, Page* page);
 
 extern HeaderPage dbheader[10];
 
 /* Project Buffer */
-// LRU clock structure
-typedef struct _LRU_clock{
-    int clock_hand;
-    int reference_bits; 
-} LRU_clock;
-
 // Buffer structure
 typedef struct _Buffer{
     Page *frame;
@@ -144,5 +139,6 @@ typedef struct _Buffer{
     off_t page_offset;
     int is_dirty;
     int pin_count;
-    LRU_clock control;
+    // LRU clock structure
+    int refbit;
 } Buffer;
