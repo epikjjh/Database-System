@@ -1349,43 +1349,98 @@ int shutdown_db(){
 }
 // Load function
 void load_page_from_buffer(int table_id, off_t offset, Page* page){
+    Page *temp;
+
+    temp = is_in_buffer(table_id, offset);
+
     // Page is in buffer pool.
-    if(in_in_buffer(table_id, offset) == true){
-
-
+    if(temp != NULL){
+        page = temp;
+        page->file_offset = offset;
     }
     // Page is not in buffer pool.
     else{
         int buf_index;
 
-        buf_index = replace_page();
+        buf_index = replace_page(table_id, page);
 
         /* Setting new buffer */ 
         // Page pointer is set already in replace_page function.
-        buf_mgf[buf_index].is_dirty = 0;
-        buf_mgf[buf_index].table_id = table_id;
-        buf_mgf[buf_index].refbit = 1;
-        buf_mgf[buf_index].pin_count = 1;
+        buf_mgr[buf_index].is_dirty = 0;
+        buf_mgr[buf_index].table_id = table_id;
+        buf_mgr[buf_index].refbit = 1;
+        buf_mgr[buf_index].pin_count = 1;
 
-
+        page = buf_mgr[buf_index].frame;
+        page->file_offset = offset; 
     }
 }
 
-bool is_in_buffer(int table_id, off_t offset){
+Page* is_in_buffer(int table_id, off_t offset){
+    int i;
 
+    if(buf_size == -1){
+        // Error case 
+        return false;
+    }
+
+    for(i = 0; i < buf_size; i++){
+        if(buf_mgr[i].table_id == table_id && buf_mgr[i].page_offset == offset){
+            // Matched case
+            return buf_mgr[i].frame;
+        }
+    }
+
+    // Unmatched case
+    return NULL;
 }
 
-int replace_page(){
+int replace_page(int table_id){
+    // clock_hand, buf_size
+    Page *target_page = NULL;
+    int target_index = -1;
 
+    while(target_page != NULL){
+        /* Check refernce bit */
+        // Case : reference bit is off.
+        if(buf_mgr[clock_hand].pin_count == 0 && buf_mgr[clock_hand].refbit == 0){
+            // Setting target_index
+            target_index = clock_hand;
 
-}
+            // Setting target_page
+            target_page = buf_mgr[clock_hand].frame;
 
-void flush_dirty_page(int table_id, off_t offset){
+            // Check dirty bit.
+            if(buf_mgr[clock_hand].is_dirty == 1){
+                /* Flush page. */
+                flush_page(table_id, target_page);
+            }
+        }
 
+        // Case : reference bit is on.
+        // Turn off the reference bit.
+        else{
+            if(buf_mgr[clock_hand].pin_count == 0 && buf_mgr[clock_hand].refbit == 1){
+                buf_mgr[clock_hand].refbit = 0;
+            }
+
+            // Move clock hand
+            clock_hand = (clock_hand + 1) % buf_size;
+        }
+    }
+
+    return target_index;
 }
 
 // Flush function
 void dirty_on(int table_id, off_t offset){
+    int i;
 
-
+    for(i = 0; i < buf_size; i++){
+        if(buf_mgr[i].table_id == table_id && buf_mgr[i].page_offset == offset){
+            // Matched case
+            buf_mgr[i].is_dirty = 1;
+            break;
+        }
+    }
 }

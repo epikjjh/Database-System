@@ -1,4 +1,4 @@
-cscope 15 $HOME/mysql/Lab/buffer/bplustree_diskbased -q 0000000224 0000032513
+cscope 15 $HOME/mysql/Lab/buffer/bplustree_diskbased -q 0000000232 0000034389
 	@include/bpt.h
 
 1 #i‚de‡
@@ -70,6 +70,48 @@ num_buf
 17 
 shutdown_db
 ();
+
+20 
+lﬂd_∑ge_‰om_buf„r
+(
+èbÀ_id
+, 
+off_t
+ 
+off£t
+, 
+Page
+* 
+∑ge
+);
+
+22 
+boﬁ
+ 
+is_ö_buf„r
+(
+èbÀ_id
+, 
+off_t
+ 
+off£t
+);
+
+24 
+ª∂a˚_∑ge
+(
+èbÀ_id
+);
+
+27 
+dúty_⁄
+(
+èbÀ_id
+, 
+off_t
+ 
+off£t
+);
 
 	@include/file.h
 
@@ -3795,7 +3837,9 @@ roŸ_∑ge
 
 915 
 dbhódî
-.
+[
+èbÀ_id
+ - 1].
 roŸ_off£t
  = 
 	`INTERNAL_OFFSET
@@ -3812,8 +3856,10 @@ node_∑ge
 918 
 	`lﬂd_∑ge
 (
+èbÀ_id
+, 
 dbhódî
-.
+[èbÀ_id - 1].
 roŸ_off£t
 , (
 Page
@@ -5344,6 +5390,324 @@ buf_mgr
 );
 
 1349 
+	}
+}
+
+1351 
+	$lﬂd_∑ge_‰om_buf„r
+(
+èbÀ_id
+, 
+off_t
+ 
+off£t
+, 
+Page
+* 
+∑ge
+){
+
+1352 
+Page
+ *
+ãmp
+;
+
+1354 
+ãmp
+ = 
+	`is_ö_buf„r
+(
+èbÀ_id
+, 
+off£t
+);
+
+1357 if(
+ãmp
+ !
+NULL
+){
+
+1358 
+∑ge
+ = 
+ãmp
+;
+
+1359 
+∑ge
+->
+fûe_off£t
+ = 
+off£t
+;
+
+1363 
+buf_ödex
+;
+
+1365 
+buf_ödex
+ = 
+	`ª∂a˚_∑ge
+(
+èbÀ_id
+, 
+∑ge
+);
+
+1369 
+buf_mgr
+[
+buf_ödex
+].
+is_dúty
+ = 0;
+
+1370 
+buf_mgr
+[
+buf_ödex
+].
+èbÀ_id
+ =Åable_id;
+
+1371 
+buf_mgr
+[
+buf_ödex
+].
+ªfbô
+ = 1;
+
+1372 
+buf_mgr
+[
+buf_ödex
+].
+pö_cou¡
+ = 1;
+
+1374 
+∑ge
+ = 
+buf_mgr
+[
+buf_ödex
+].
+‰ame
+;
+
+1375 
+∑ge
+->
+fûe_off£t
+ = 
+off£t
+;
+
+1377 
+	}
+}
+
+1379 
+Page
+* 
+	$is_ö_buf„r
+(
+èbÀ_id
+, 
+off_t
+ 
+off£t
+){
+
+1380 
+i
+;
+
+1382 if(
+buf_size
+ == -1){
+
+1384  
+Ál£
+;
+
+1387 
+i
+ = 0; i < 
+buf_size
+; i++){
+
+1388 if(
+buf_mgr
+[
+i
+].
+èbÀ_id
+ =èbÀ_id && buf_mgr[i].
+∑ge_off£t
+ =
+off£t
+){
+
+1390  
+buf_mgr
+[
+i
+].
+‰ame
+;
+
+1395  
+NULL
+;
+
+1396 
+	}
+}
+
+1398 
+	$ª∂a˚_∑ge
+(
+èbÀ_id
+){
+
+1400 
+Page
+ *
+èrgë_∑ge
+ = 
+NULL
+;
+
+1401 
+èrgë_ödex
+ = -1;
+
+1403 
+èrgë_∑ge
+ !
+NULL
+){
+
+1406 if(
+buf_mgr
+[
+˛ock_h™d
+].
+pö_cou¡
+ =0 && buf_mgr[˛ock_h™d].
+ªfbô
+ == 0){
+
+1408 
+èrgë_ödex
+ = 
+˛ock_h™d
+;
+
+1411 
+èrgë_∑ge
+ = 
+buf_mgr
+[
+˛ock_h™d
+].
+‰ame
+;
+
+1414 if(
+buf_mgr
+[
+˛ock_h™d
+].
+is_dúty
+ == 1){
+
+1416 
+	`Êush_∑ge
+(
+èbÀ_id
+, 
+èrgë_∑ge
+);
+
+1423 if(
+buf_mgr
+[
+˛ock_h™d
+].
+pö_cou¡
+ =0 && buf_mgr[˛ock_h™d].
+ªfbô
+ == 1){
+
+1424 
+buf_mgr
+[
+˛ock_h™d
+].
+ªfbô
+ = 0;
+
+1428 
+˛ock_h™d
+ = (˛ock_h™d + 1Ë% 
+buf_size
+;
+
+1432  
+èrgë_ödex
+;
+
+1433 
+	}
+}
+
+1436 
+	$dúty_⁄
+(
+èbÀ_id
+, 
+off_t
+ 
+off£t
+){
+
+1437 
+i
+;
+
+1439 
+i
+ = 0; i < 
+buf_size
+; i++){
+
+1440 if(
+buf_mgr
+[
+i
+].
+èbÀ_id
+ =èbÀ_id && buf_mgr[i].
+∑ge_off£t
+ =
+off£t
+){
+
+1442 
+buf_mgr
+[
+i
+].
+is_dúty
+ = 1;
+
+1446 
 	}
 }
 
