@@ -1347,3 +1347,45 @@ int shutdown_db(){
 
     return 0;
 }
+// Load function
+void load_page_from_buffer(int table_id, off_t offset, Page* page){
+    // Page is in buffer pool.
+    if(in_in_buffer(table_id, offset) == true){
+
+
+    }
+    // Page is not in buffer pool.
+    else{
+        int buf_index;
+
+        buf_index = replace_page();
+
+        /* Setting new buffer */ 
+        // Page pointer is set already in replace_page function.
+        buf_mgf[buf_index].is_dirty = 0;
+        buf_mgf[buf_index].table_id = table_id;
+        buf_mgf[buf_index].refbit = 1;
+        buf_mgf[buf_index].pin_count = 1;
+
+
+    }
+}
+
+bool is_in_buffer(int table_id, off_t offset){
+
+}
+
+int replace_page(){
+
+
+}
+
+void flush_dirty_page(int table_id, off_t offset){
+
+}
+
+// Flush function
+void dirty_on(int table_id, off_t offset){
+
+
+}
