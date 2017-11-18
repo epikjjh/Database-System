@@ -264,10 +264,10 @@ int open_table(const char* filename) {
         dbheader[i].root_offset = 0;
         dbheader[i].num_pages = 1;
         dbheader[i].file_offset = 0;
-        flush_page((Page*)(dbheader+i));
+        dirty_on(i, dbheader[i].file_offset);
     } else {
         // DB file exist. Load header info
-        load_page(0, (Page*)(dbheader+i));
+        load_page_from_buffer(i, 0, (Page*)(dbheader+i));
         dbheader[i].file_offset = 0;
     }
 
@@ -324,7 +324,7 @@ void print_tree(int table_id) {
         }
         
         NodePage node_page;
-        load_page(table_id, page_offset, (Page*)&node_page);
+        load_page_from_buffer(table_id, page_offset, (Page*)&node_page);
         if (node_page.is_leaf == 1) {
             // leaf node
             LeafPage* leaf_node = (LeafPage*)&node_page;
@@ -376,7 +376,7 @@ bool find_leaf(int table_id, uint64_t key, LeafPage* out_leaf_node) {
 	}
     
     NodePage page;
-    load_page(table_id, root_offset, (Page*)&page);
+    load_page_from_buffer(table_id, root_offset, (Page*)&page);
 
 	while (!page.is_leaf) {
         InternalPage* internal_node = (InternalPage*)&page;
@@ -387,7 +387,7 @@ bool find_leaf(int table_id, uint64_t key, LeafPage* out_leaf_node) {
 			else break;
 		}
         
-        load_page(table_id, INTERNAL_OFFSET(internal_node, i), (Page*)&page);
+        load_page_from_buffer(table_id, INTERNAL_OFFSET(internal_node, i), (Page*)&page);
 	}
 
     memcpy(out_leaf_node, &page, sizeof(LeafPage));
@@ -467,7 +467,7 @@ void insert_into_leaf(int table_id, LeafPage* leaf_node, uint64_t key, const cha
 	leaf_node->num_keys++;
 
     // flush leaf node to the file page
-    flush_page((Page*)leaf_node);
+    dirty_on(table_id, leaf_node->file_offset);
 }
 
 /* Inserts a new key and pointer
@@ -545,8 +545,8 @@ void insert_into_leaf_after_splitting(int table_id, LeafPage* leaf, uint64_t key
 
 	new_leaf.parent = leaf->parent;
 
-    flush_page((Page*)leaf);
-    flush_page((Page*)&new_leaf);
+    dirty_on(table_id, leaf->file_offset);
+    dirty_on(table_id, new_leaf.file_offset);
 
 	new_key = LEAF_KEY(&new_leaf, 0);
 
@@ -642,9 +642,9 @@ void insert_into_node_after_splitting(int table_id, InternalPage* old_node, int 
 	new_node.parent = old_node->parent;
 	for (i = 0; i <= new_node.num_keys; i++) {
 		NodePage child_page;
-        load_page(INTERNAL_OFFSET(&new_node, i), (Page*)&child_page);
+        load_page_from_buffer(table_id, INTERNAL_OFFSET(&new_node, i), (Page*)&child_page);
         child_page.parent = new_node.file_offset;
-	    flush_page((Page*)&child_page);
+        dirty_on(table_id, child_page.file_offset);
     }
 
     // clear garbage record
@@ -659,8 +659,8 @@ void insert_into_node_after_splitting(int table_id, InternalPage* old_node, int 
     }
 
     // flush old, new node
-    flush_page((Page*)&new_node);
-    flush_page((Page*)old_node);
+    dirty_on(table_id, new_node.file_offset);
+    dirty_on(table_id old_node->file_offset);
 
 	/* Insert a new key into the parent of the two
 	 * nodes resulting from the split, with
@@ -682,7 +682,7 @@ void insert_into_parent(int table_id, NodePage* left, uint64_t key, NodePage* ri
         return;
     }
 
-    load_page(left->parent, (Page*)&parent_node);
+    load_page_from_buffer(table_id, left->parent, (Page*)&parent_node);
 
 	/* Case: leaf or node. (Remainder of
 	 * function body.)  
@@ -699,7 +699,7 @@ void insert_into_parent(int table_id, NodePage* left, uint64_t key, NodePage* ri
 
 	if (parent_node.num_keys < order_internal - 1) {
 		insert_into_node(&parent_node, left_index, key, right->file_offset);
-        flush_page((Page*)&parent_node);
+        dirty_on(table_id, parent_node.file_offset);
         return;
     }
 
@@ -728,12 +728,12 @@ void insert_into_new_root(int table_id, NodePage* left, uint64_t key, NodePage* 
     left->parent = root_node.file_offset;
     right->parent = root_node.file_offset;
 
-    flush_page((Page*)&root_node);
-    flush_page((Page*)left);
-    flush_page((Page*)right);
+    dirty_on(table_id, root_node.file_offset);
+    dirty_on(table_id, left->file_offset);
+    dirty_on(table_id, right->file_offset);
 
     dbheader[table_id - 1].root_offset = root_node.file_offset;
-    flush_page((Page*)&dbheader);
+    dirty_on(table_id, dbheader[table_id - 1].file_offset);
 }
 /* First insertion:
  * start a new tree.
@@ -751,10 +751,10 @@ void start_new_tree(int table_id, uint64_t key, const char* value) {
     root_node.sibling = 0;
     memcpy(LEAF_VALUE(&root_node, 0), value, SIZE_VALUE);
     
-    flush_page((Page*)&root_node);
+    dirty_on(table_id, root_node.file_offset);
 
     dbheader[table_id - 1].root_offset = root_offset;
-    flush_page((Page*)&dbheader);
+    dirty_on(table_id, dbheader[table_id - 1].file_offset);
 }
 
 /* Master insertion function.
@@ -821,7 +821,7 @@ int get_neighbor_index(int table_id, NodePage* node_page) {
 	 * return -1.
 	 */
     InternalPage parent_node;
-    load_page(table_id, node_page->parent, (Page*)&parent_node);
+    load_page_from_buffer(table_id, node_page->parent, (Page*)&parent_node);
 	for (i = 0; i <= parent_node.num_keys; i++)
 		if (INTERNAL_OFFSET(&parent_node, i) == node_page->file_offset)
 			return i - 1;
@@ -831,7 +831,7 @@ int get_neighbor_index(int table_id, NodePage* node_page) {
     return -1;
 }
 
-void remove_entry_from_node(NodePage* node_page, uint64_t key) {
+void remove_entry_from_node(int table_id, NodePage* node_page, uint64_t key) {
 
 	int i;
     int key_idx = 0;
@@ -887,13 +887,13 @@ void remove_entry_from_node(NodePage* node_page, uint64_t key) {
         internal_node->num_keys--;
     }
 
-    flush_page((Page*)node_page);
+    dirty_on(table_id, node_page->file_offset);
 }
 
 void adjust_root(int table_id) {
 
     NodePage root_page;
-    load_page(dbheader[table_id - 1].root_offset, (Page*)&root_page);
+    load_page_from_buffer(table_id, dbheader[table_id - 1].root_offset, (Page*)&root_page);
 
 	/* Case: nonempty root.
 	 * Key and pointer have already been deleted,
@@ -915,11 +915,11 @@ void adjust_root(int table_id) {
         dbheader[table_id - 1].root_offset = INTERNAL_OFFSET(root_node, 0);
 		
         NodePage node_page;
-        load_page(table_id, dbheader[table_id - 1].root_offset, (Page*)&node_page);
+        load_page_from_buffer(table_id, dbheader[table_id - 1].root_offset, (Page*)&node_page);
         node_page.parent = 0;
 
-        flush_page((Page*)&node_page);
-        flush_page((Page*)&dbheader);
+        dirty_on(table_id, node_page.file_offset);
+        dirty_on(table_id, dbheader[table_id - 1].file_offset);
 	}
 
 	// If it is a leaf (has no children),
@@ -927,7 +927,7 @@ void adjust_root(int table_id) {
 
 	else {
         dbheader[table_id - 1].root_offset = 0;
-        flush_page((Page*)&dbheader);
+        dirty_on(table_id, dbheader[table_id - 1].file_offset);
     }
 
     put_free_page(table_id, root_page.file_offset);
@@ -997,12 +997,12 @@ void coalesce_nodes(int table_id, NodePage* node_page, NodePage* neighbor_page, 
 
 		for (i = 0; i < neighbor_node->num_keys + 1; i++) {
             NodePage child_page;
-            load_page(INTERNAL_OFFSET(neighbor_node, i), (Page*)&child_page);
+            load_page_from_buffer(table_id, INTERNAL_OFFSET(neighbor_node, i), (Page*)&child_page);
             child_page.parent = neighbor_node->file_offset;
-		    flush_page((Page*)&child_page);
+            dirty_on(table_id, child_page.file_offset);
         }
 
-        flush_page((Page*)neighbor_node);
+        dirty_on(table_id, neighbor_node->file_offset);
 
         put_free_page(node->file_offset);
 	}
@@ -1024,13 +1024,13 @@ void coalesce_nodes(int table_id, NodePage* node_page, NodePage* neighbor_page, 
 		}
         neighbor_node->sibling = node->sibling;
 
-        flush_page((Page*)neighbor_node);
+        dirty_on(table_id, neighbor_node->file_offset);
 
         put_free_page(node->file_offset);
 	}
 
     NodePage parent_node;
-    load_page(node_page->parent, (Page*)&parent_node);
+    load_page_from_buffer(table_id, node_page->parent, (Page*)&parent_node);
 	delete_entry(table_id, &parent_node, k_prime);
 }
 
@@ -1063,17 +1063,17 @@ void rdistribute_nodes(int table_id, NodePage* node_page, NodePage* neighbor_pag
 		    }
             INTERNAL_OFFSET(node, 0) = INTERNAL_OFFSET(neighbor_node, neighbor_node->num_keys);
             NodePage child_page;
-            load_page(INTERNAL_OFFSET(node, 0), (Page*)&child_page);
+            load_page_from_buffer(table_id, INTERNAL_OFFSET(node, 0), (Page*)&child_page);
             child_page.parent = node->file_offset;
-            flush_page((Page*)&child_page);
+            dirty_on(table_id, child_page.file_offset);
 
 			INTERNAL_OFFSET(neighbor_node, neighbor_node->num_keys) = 0;
 			INTERNAL_KEY(node, 0) = k_prime;
 
             InternalPage parent_node;
-            load_page(node->parent, (Page*)&parent_node);
+            load_page_from_buffer(table_id, node->parent, (Page*)&parent_node);
             INTERNAL_KEY(&parent_node, k_prime_index) = INTERNAL_KEY(neighbor_node, neighbor_node->num_keys - 1);
-            flush_page((Page*)&parent_node);
+            dirty_on(table_id, parent_node.file_offset);
 
             /* n now has one more key and one more pointer;
              * the neighbor has one fewer of each.
@@ -1081,8 +1081,8 @@ void rdistribute_nodes(int table_id, NodePage* node_page, NodePage* neighbor_pag
             node->num_keys++;
             neighbor_node->num_keys--;
             
-            flush_page((Page*)node_page);
-            flush_page((Page*)neighbor_page);
+            dirty_on(table_id, node_page->file_offset);
+            dirty_on(table_id, neighbor_page->file_offset);
 
         } else {
             LeafPage* node = (LeafPage*)node_page;
@@ -1097,9 +1097,9 @@ void rdistribute_nodes(int table_id, NodePage* node_page, NodePage* neighbor_pag
 			LEAF_KEY(node, 0) = LEAF_KEY(neighbor_node, neighbor_node->num_keys - 1);
 
             InternalPage parent_node;
-            load_page(node->parent, (Page*)&parent_node);
+            load_page_from_buffer(table_id, node->parent, (Page*)&parent_node);
 			INTERNAL_KEY(&parent_node, k_prime_index) = LEAF_KEY(node, 0);
-            flush_page((Page*)&parent_node);
+            dirty_on(table_id, parent_node.file_offset);
 
             /* n now has one more key and one more pointer;
              * the neighbor has one fewer of each.
@@ -1107,8 +1107,8 @@ void rdistribute_nodes(int table_id, NodePage* node_page, NodePage* neighbor_pag
             node->num_keys++;
             neighbor_node->num_keys--;
             
-            flush_page((Page*)node_page);
-            flush_page((Page*)neighbor_page);
+            dirty_on(table_id, node_page->file_offset);
+            dirty_on(table_id, neighbor_page->file_offset);
         }
     }
 
@@ -1127,9 +1127,9 @@ void rdistribute_nodes(int table_id, NodePage* node_page, NodePage* neighbor_pag
 			memcpy(LEAF_VALUE(node, node->num_keys), LEAF_VALUE(neighbor_node, 0), SIZE_VALUE);
 
             InternalPage parent_node;
-            load_page(node->parent, (Page*)&parent_node);
+            load_page_from_buffer(table_id, node->parent, (Page*)&parent_node);
 			INTERNAL_KEY(&parent_node, k_prime_index) = LEAF_KEY(neighbor_node, 1);
-            flush_page((Page*)&parent_node);
+            dirty_on(table_id, parent_node.file_offset);
             
             for (i = 0; i < neighbor_node->num_keys - 1; i++) {
 			    LEAF_KEY(neighbor_node, i) = LEAF_KEY(neighbor_node, i + 1);
@@ -1142,8 +1142,8 @@ void rdistribute_nodes(int table_id, NodePage* node_page, NodePage* neighbor_pag
             node->num_keys++;
             neighbor_node->num_keys--;
             
-            flush_page((Page*)node_page);
-            flush_page((Page*)neighbor_page);
+            dirty_on(table_id, node_page->file_offset);
+            dirty_on(table_id, neighbor_page->file_offset);
 
 		}
 		else {
@@ -1154,14 +1154,14 @@ void rdistribute_nodes(int table_id, NodePage* node_page, NodePage* neighbor_pag
 			INTERNAL_OFFSET(node, node->num_keys + 1) = INTERNAL_OFFSET(neighbor_node, 0);
             
             NodePage child_page;
-            load_page(INTERNAL_OFFSET(node, node->num_keys + 1), (Page*)&child_page);
+            load_page_from_buffer(table_id, INTERNAL_OFFSET(node, node->num_keys + 1), (Page*)&child_page);
             child_page.parent = node->file_offset;
-			flush_page((Page*)&child_page);
+            dirty_on(table_id, child_page.file_offset);
 
             InternalPage parent_node;
-            load_page(node->parent, (Page*)&parent_node);
+            load_page_from_buffer(table_id, node->parent, (Page*)&parent_node);
             INTERNAL_KEY(&parent_node, k_prime_index) = INTERNAL_KEY(neighbor_node, 0);
-            flush_page((Page*)&parent_node);
+            dirty_on(table_id, parent_node.file_offset);
 
             for (i = 0; i < neighbor_node->num_keys - 1; i++) {
 			    INTERNAL_KEY(neighbor_node, i) = INTERNAL_KEY(neighbor_node, i + 1);
@@ -1178,8 +1178,8 @@ void rdistribute_nodes(int table_id, NodePage* node_page, NodePage* neighbor_pag
             node->num_keys++;
             neighbor_node->num_keys--;
             
-            flush_page((Page*)node_page);
-            flush_page((Page*)neighbor_page);
+            dirty_on(table_id, node_page->file_offset);
+            dirty_on(table_id, neighbor_page->file_offset);
 
 		}
     }
@@ -1201,7 +1201,7 @@ void delete_entry(int table_id, NodePage* node_page, uint64_t key) {
 
 	// Remove key and pointer from node.
 
-	remove_entry_from_node(node_page, key);
+	remove_entry_from_node(table_id, node_page, key);
 	/* Case:  deletion from the root. 
 	 */
 
@@ -1243,7 +1243,7 @@ void delete_entry(int table_id, NodePage* node_page, uint64_t key) {
 	k_prime_index = neighbor_index == -1 ? 0 : neighbor_index;
 
     InternalPage parent_node;
-    load_page(table_id, node_page->parent, (Page*)&parent_node);
+    load_page_from_buffer(table_id, node_page->parent, (Page*)&parent_node);
 
 	k_prime = INTERNAL_KEY(&parent_node, k_prime_index);
 	neighbor_offset = neighbor_index == -1 ? INTERNAL_OFFSET(&parent_node, 1) : 
@@ -1252,7 +1252,7 @@ void delete_entry(int table_id, NodePage* node_page, uint64_t key) {
 	capacity = node_page->is_leaf ? order_leaf : order_internal - 1;
 
     NodePage neighbor_page;
-    load_page(table_id, neighbor_offset, (Page*)&neighbor_page);
+    load_page_from_buffer(table_id, neighbor_offset, (Page*)&neighbor_page);
 	/* Coalescence. */
 
 	if (neighbor_page.num_keys + node_page->num_keys < capacity)
@@ -1364,15 +1364,18 @@ void load_page_from_buffer(int table_id, off_t offset, Page* page){
 
         buf_index = replace_page(table_id, page);
 
+        // Load from disk.
+        load_page(table_id, offset, page);
+        page->file_offset = offset; 
+
         /* Setting new buffer */ 
         // Page pointer is set already in replace_page function.
-        buf_mgr[buf_index].is_dirty = 0;
+        buf_mgr[buf_index].frame = page;
         buf_mgr[buf_index].table_id = table_id;
+        buf_mgr[buf_index].page_offset = offset;
+        buf_mgr[buf_index].is_dirty = 0;
+        buf_mgr[buf_index].pin_count = 1; 
         buf_mgr[buf_index].refbit = 1;
-        buf_mgr[buf_index].pin_count = 1;
-
-        page = buf_mgr[buf_index].frame;
-        page->file_offset = offset; 
     }
 }
 
@@ -1381,7 +1384,7 @@ Page* is_in_buffer(int table_id, off_t offset){
 
     if(buf_size == -1){
         // Error case 
-        return false;
+        return NULL;
     }
 
     for(i = 0; i < buf_size; i++){
