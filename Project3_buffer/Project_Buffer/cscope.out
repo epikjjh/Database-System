@@ -1,4 +1,4 @@
-cscope 15 $HOME/mysql/Lab/buffer/Project_Buffer -q 0000000233 0000035905
+cscope 15 $HOME/mysql/Lab/Project3_buffer/Project_Buffer -q 0000000233 0000035863
 	@include/bpt.h
 
 1 #i‚de‡
@@ -5757,7 +5757,7 @@ NULL
 
 1426 
 èrgë_∑ge
- !
+ =
 NULL
  && 
 ödex
@@ -6426,16 +6426,20 @@ SIZE_VALUE
 ();
 
 21 
+	`öô_db
+(3);
+
+22 
 èbÀ
  = 
 	`›í_èbÀ
 ("test.db");
 
-22 
+23 
 	`¥ötf
 ("> ");
 
-23 
+24 
 	`sˇnf
 ("%c", &
 ö°ru˘i⁄
@@ -6443,11 +6447,11 @@ SIZE_VALUE
 EOF
 ) {
 
-24 
+25 
 ö°ru˘i⁄
 ) {
 
-26 
+27 
 	`sˇnf
 ("%" 
 PRIu64
@@ -6457,7 +6461,7 @@ PRIu64
 öput_vÆue
 );
 
-27 
+28 
 	`ö£π
 (
 èbÀ
@@ -6467,13 +6471,7 @@ PRIu64
 öput_vÆue
 );
 
-28 
-	`¥öt_åì
-(
-èbÀ
-);
-
-31 
+32 
 	`sˇnf
 ("%" 
 PRIu64
@@ -6481,7 +6479,7 @@ PRIu64
 öput_key
 );
 
-32 
+33 
 	`dñëe
 (
 èbÀ
@@ -6489,13 +6487,7 @@ PRIu64
 öput_key
 );
 
-33 
-	`¥öt_åì
-(
-èbÀ
-);
-
-37 
+38 
 	`sˇnf
 ("%" 
 PRIu64
@@ -6503,7 +6495,7 @@ PRIu64
 öput_key
 );
 
-38 
+39 
 	`föd_™d_¥öt
 (
 èbÀ
@@ -6511,47 +6503,41 @@ PRIu64
 öput_key
 );
 
-41 
+42 
 	`gëch¨
 () != ()'\n');
 
-42  
+43  
 EXIT_SUCCESS
 ;
 
-45 
-	`¥öt_åì
-(
-èbÀ
-);
-
-48 
+49 
 	`ußge_2
 ();
 
-51 
+52 
 	`gëch¨
 () != ()'\n');
 
-52 
+53 
 	`¥ötf
 ("> ");
 
-54 
+55 
 	`¥ötf
 ("\n");
 
-56 
+57 
 	`˛o£_db
 (
 èbÀ
 );
 
-58  
+59  
 EXIT_SUCCESS
 ;
 
-59 
+60 
 	}
 }
 

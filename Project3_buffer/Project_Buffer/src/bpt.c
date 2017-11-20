@@ -1423,7 +1423,7 @@ int replace_page(int table_id){
     int target_index = -1, index = 0;
 
     // Spin only one cycle.
-    while(target_page != NULL && index != buf_size){
+    while(target_page == NULL && index != buf_size){
         /* Check refernce bit */
         // Case : reference bit is off.
         if(buf_mgr[clock_hand].pin_count == 0 && buf_mgr[clock_hand].refbit == 0){
