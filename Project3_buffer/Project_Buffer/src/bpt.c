@@ -377,11 +377,11 @@ bool find_leaf(int table_id, uint64_t key, LeafPage* out_leaf_node) {
 		return false;
 	}
     
-    NodePage page;
-    load_page_from_buffer(table_id, root_offset, (Page*)&page);
+    NodePage *page;
+    page = (NodePage *)load_page_from_buffer(table_id, root_offset, (Page*)page);
 
-	while (!page.is_leaf) {
-        InternalPage* internal_node = (InternalPage*)&page;
+	while (!page->is_leaf) {
+        InternalPage* internal_node = (InternalPage*)page;
 
         i = 0;
 		while (i < internal_node->num_keys) {
@@ -389,10 +389,10 @@ bool find_leaf(int table_id, uint64_t key, LeafPage* out_leaf_node) {
 			else break;
 		}
         
-        load_page_from_buffer(table_id, INTERNAL_OFFSET(internal_node, i), (Page*)&page);
+        load_page_from_buffer(table_id, INTERNAL_OFFSET(internal_node, i), (Page*)page);
 	}
 
-    memcpy(out_leaf_node, &page, sizeof(LeafPage));
+    memcpy(out_leaf_node, page, sizeof(LeafPage));
 
 	return true;
 }
@@ -1317,6 +1317,9 @@ int close_table(int table_id){
             if(buf_mgr[i].is_dirty == 1){
                 flush_page(table_id, buf_mgr[i].frame);
             }
+
+            // Memory free
+            free(buf_mgr[i].frame);
             // Reinitialize : Evict
             memset(buf_mgr+i, 0, sizeof(Buffer));
         }
@@ -1342,6 +1345,10 @@ int shutdown_db(){
             table_id = buf_mgr[i].table_id;
             flush_page(table_id, buf_mgr[i].frame);
         }
+        // If buffer is used, memory free should be done.
+        if(1 <= buf_mgr[i].table_id && buf_mgr[i].table_id <= 10){
+            free(buf_mgr[i].frame);
+        }
     }
 
     // Destroy allocated buffer
@@ -1350,16 +1357,18 @@ int shutdown_db(){
     return 0;
 }
 // Load function
-void load_page_from_buffer(int table_id, off_t offset, Page* page){
+Page* load_page_from_buffer(int table_id, off_t offset, Page* page){
     Page *temp;
     int buf_index = -1;
 
-    temp = is_in_buffer(table_id, offset, 1);
+    temp = is_in_buffer(table_id, offset, page, 1);
 
     // Page is in buffer pool.
     if(temp != NULL){
+        // Load page from buffer pool.
         page = temp;
         page->file_offset = offset;
+        return temp;
 
         /* Add pin count */
         // Previously done in is_in_buffer function
@@ -1376,7 +1385,11 @@ void load_page_from_buffer(int table_id, off_t offset, Page* page){
         // In case of busy buffer pool, just load page from disk.
         if(buf_index != -1){
             /* Setting new buffer */ 
-            // Page pointer is set already in replace_page function.
+            // Page index is set already in replace_page function.
+            // Memory allocation & Memory copy
+            buf_mgr[buf_index].frame = (Page*)malloc(sizeof(Page));
+            memcpy(buf_mgr[buf_index].frame, page, sizeof(Page));
+
             buf_mgr[buf_index].frame = page;
             buf_mgr[buf_index].table_id = table_id;
             buf_mgr[buf_index].page_offset = offset;
@@ -1385,11 +1398,14 @@ void load_page_from_buffer(int table_id, off_t offset, Page* page){
             buf_mgr[buf_index].refbit = 1;
         }
     }
+    ///test
+        return NULL;
+    ///
 }
 /* Type is used for pin count setting. */
 // type 1 means load : increase pin count
 // type 0 means flush : decrease pin count
-Page* is_in_buffer(int table_id, off_t offset, int type){
+Page* is_in_buffer(int table_id, off_t offset, Page *page, int type){
     int i;
 
     if(buf_size == -1){
@@ -1406,6 +1422,8 @@ Page* is_in_buffer(int table_id, off_t offset, int type){
             }
             // Type 0 : flush
             else{
+                // Update buffer page
+                memcpy(buf_mgr[i].frame, page, sizeof(Page));
                 buf_mgr[i].is_dirty = 1;
                 buf_mgr[i].pin_count--;
             }
@@ -1438,6 +1456,12 @@ int replace_page(int table_id){
                 /* Flush page. */
                 flush_page(table_id, target_page);
             }
+
+            // Memory free
+            free(buf_mgr[clock_hand].frame);
+
+            // Reinitialize : Evict
+            memset(buf_mgr+clock_hand, 0, sizeof(Buffer));
         }
 
         // Case : reference bit is on.
@@ -1464,7 +1488,7 @@ void dirty_on(int table_id, Page *page){
     // Check if target page is in buffer
     /* Decrease pin count : Done in is_in_buffer function. */
     /* Dirty bit setting : Done in is_in_buffer function. */
-    temp = is_in_buffer(table_id, page->file_offset, 0);
+    temp = is_in_buffer(table_id, page->file_offset, page, 0);
 
     // Page is not in buffer
     if(temp == NULL){
@@ -1478,7 +1502,9 @@ void dirty_on(int table_id, Page *page){
         else{
             /* Setting new buffer */ 
             // Page pointer is set already in replace_page function.
-            buf_mgr[buf_index].frame = page;
+            // Memory allocation & Memory copy
+            buf_mgr[buf_index].frame = (Page*)malloc(sizeof(Page));
+            memcpy(buf_mgr[buf_index].frame, page, sizeof(Page));
             buf_mgr[buf_index].table_id = table_id;
             buf_mgr[buf_index].page_offset = page->file_offset;
             // Setting dirty bit
