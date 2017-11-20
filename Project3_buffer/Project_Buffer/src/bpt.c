@@ -377,11 +377,11 @@ bool find_leaf(int table_id, uint64_t key, LeafPage* out_leaf_node) {
 		return false;
 	}
     
-    NodePage *page;
-    page = (NodePage *)load_page_from_buffer(table_id, root_offset, (Page*)page);
+    NodePage page;
+    load_page_from_buffer(table_id, root_offset, (Page*)&page);
 
-	while (!page->is_leaf) {
-        InternalPage* internal_node = (InternalPage*)page;
+	while (!page.is_leaf) {
+        InternalPage* internal_node = (InternalPage*)&page;
 
         i = 0;
 		while (i < internal_node->num_keys) {
@@ -389,10 +389,10 @@ bool find_leaf(int table_id, uint64_t key, LeafPage* out_leaf_node) {
 			else break;
 		}
         
-        load_page_from_buffer(table_id, INTERNAL_OFFSET(internal_node, i), (Page*)page);
+        load_page_from_buffer(table_id, INTERNAL_OFFSET(internal_node, i), (Page*)&page);
 	}
 
-    memcpy(out_leaf_node, page, sizeof(LeafPage));
+    memcpy(out_leaf_node, &page, sizeof(LeafPage));
 
 	return true;
 }
@@ -1357,7 +1357,7 @@ int shutdown_db(){
     return 0;
 }
 // Load function
-Page* load_page_from_buffer(int table_id, off_t offset, Page* page){
+void load_page_from_buffer(int table_id, off_t offset, Page* page){
     Page *temp;
     int buf_index = -1;
 
@@ -1366,9 +1366,8 @@ Page* load_page_from_buffer(int table_id, off_t offset, Page* page){
     // Page is in buffer pool.
     if(temp != NULL){
         // Load page from buffer pool.
-        page = temp;
+        memcpy(page, temp, sizeof(Page));
         page->file_offset = offset;
-        return temp;
 
         /* Add pin count */
         // Previously done in is_in_buffer function
@@ -1398,9 +1397,6 @@ Page* load_page_from_buffer(int table_id, off_t offset, Page* page){
             buf_mgr[buf_index].refbit = 1;
         }
     }
-    ///test
-        return NULL;
-    ///
 }
 /* Type is used for pin count setting. */
 // type 1 means load : increase pin count

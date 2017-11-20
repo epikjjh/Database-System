@@ -144,7 +144,7 @@ typedef struct _Buffer{
 } Buffer;
 
 // Load function
-Page* load_page_from_buffer(int table_id, off_t offset, Page* page);
+void load_page_from_buffer(int table_id, off_t offset, Page* page);
 
 Page* is_in_buffer(int table_id, off_t offset, Page *page, int type);
 
