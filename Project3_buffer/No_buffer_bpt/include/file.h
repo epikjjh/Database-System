@@ -1,8 +1,8 @@
 #include <stddef.h>
 #include <inttypes.h>
 
-#define BPTREE_INTERNAL_ORDER       249 //4
-#define BPTREE_LEAF_ORDER           32  //4
+#define BPTREE_INTERNAL_ORDER       4//249
+#define BPTREE_LEAF_ORDER           4//32
 
 #define PAGE_SIZE                   4096
 
@@ -108,37 +108,25 @@ typedef struct _NodePage {
 } NodePage;
 
 // Open a db file. Create a file if not exist.
-int open_table(const char* filename);
+int open_db(const char* filename);
 
 // Close a db file
-// Not used in project buffer : Replaced by close_table function
-void close_db(int table_id);
+void close_db();
 
 // Get free page to use
-off_t get_free_page(int table_id);
+off_t get_free_page();
 
 // Put free page to the free list
-void put_free_page(int table_id, off_t page_offset);
+void put_free_page(off_t page_offset);
 
 // Expand file size and prepend pages to the free list
-void expand_file(int table_id, size_t cnt_page_to_expand);
+void expand_file(size_t cnt_page_to_expand);
 
 // Load file page into the in-memory page
-void load_page(int table_id, off_t offset, Page* page);
+void load_page(off_t offset, Page* page);
 
 // Flush page into the file
-void flush_page(int table_id, Page* page);
+void flush_page(Page* page);
 
-extern HeaderPage dbheader[10];
+extern HeaderPage dbheader;
 
-/* Project Buffer */
-// Buffer structure
-typedef struct _Buffer{
-    Page *frame;
-    int table_id;
-    off_t page_offset;
-    int is_dirty;
-    int pin_count;
-    // LRU clock structure
-    int refbit;
-} Buffer;
