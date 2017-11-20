@@ -19,11 +19,11 @@ int shutdown_db();
 // Load function
 void load_page_from_buffer(int table_id, off_t offset, Page* page);
 
-bool is_in_buffer(int table_id, off_t offset);
+Page* is_in_buffer(int table_id, off_t offset, int type);
 
 int replace_page(int table_id);
 
 // Flush function
-void dirty_on(int table_id, off_t offset);
+void dirty_on(int table_id, Page* page);
 
 #endif // __BPT_H__

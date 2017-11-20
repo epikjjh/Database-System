@@ -26,7 +26,7 @@ off_t get_free_page(int table_id) {
     load_page_from_buffer(table_id, freepage_offset, (Page*)&freepage);
     dbheader[table_id - 1].freelist = freepage.next;
     
-    dirty_on(table_id, dbheader[table_id - 1].file_offset);
+    dirty_on(table_id, (Page*)(dbheader + table_id - 1));
     
     return freepage_offset;
 }
@@ -38,14 +38,12 @@ void put_free_page(int table_id, off_t page_offset) {
 
     freepage.next = dbheader[table_id - 1].freelist;
     freepage.file_offset = page_offset;
-    // Flush? -> Later
-    // Check it later
-    //flush_page(table_id, (Page*)&freepage);
-    dirty_on(table_id, freepage.file_offset);
+
+    dirty_on(table_id, (Page*)&freepage);
     
     dbheader[table_id - 1].freelist = page_offset;
 
-    dirty_on(table_id, dbheader[table_id - 1].file_offset);
+    dirty_on(table_id, (Page*)(dbheader + table_id - 1));
 }
 
 // Expand file pages and prepend them to the free list
@@ -64,7 +62,7 @@ void expand_file(int table_id, size_t cnt_page_to_expand) {
         offset += PAGE_SIZE;
     }
 
-    dirty_on(table_id, dbheader[table_id - 1].file_offset);
+    dirty_on(table_id, (Page*)(dbheader + table_id - 1));
 }
 
 void load_page(int table_id, off_t offset, Page* page) {
