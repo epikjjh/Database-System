@@ -23,7 +23,7 @@ off_t get_free_page(int table_id) {
     }
    
     FreePage freepage;
-    load_page_from_page(table_id, freepage_offset, (Page*)&freepage);
+    load_page_from_buffer(table_id, freepage_offset, (Page*)&freepage);
     dbheader[table_id - 1].freelist = freepage.next;
     
     dirty_on(table_id, dbheader[table_id - 1].file_offset);
@@ -39,6 +39,8 @@ void put_free_page(int table_id, off_t page_offset) {
     freepage.next = dbheader[table_id - 1].freelist;
     freepage.file_offset = page_offset;
     // Flush? -> Later
+    // Check it later
+    //flush_page(table_id, (Page*)&freepage);
     dirty_on(table_id, freepage.file_offset);
     
     dbheader[table_id - 1].freelist = page_offset;

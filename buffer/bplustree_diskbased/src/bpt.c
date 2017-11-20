@@ -241,8 +241,10 @@ int open_table(const char* filename) {
 
     // Table capacitance check.
     for(i = 0; i < 10; i++){
-        if(table_ids[i] == 0)
+        if(table_ids[i] == 0){
+            table_ids[i] = 1;
             break;
+        }
     }
 
     // Over table. ( MAX : 10 )
@@ -264,7 +266,7 @@ int open_table(const char* filename) {
         dbheader[i].root_offset = 0;
         dbheader[i].num_pages = 1;
         dbheader[i].file_offset = 0;
-        dirty_on(i, dbheader[i].file_offset);
+        dirty_on(i, (Page*)(dbheader + i));
     } else {
         // DB file exist. Load header info
         load_page_from_buffer(i, 0, (Page*)(dbheader+i));
@@ -1350,6 +1352,7 @@ int shutdown_db(){
 // Load function
 void load_page_from_buffer(int table_id, off_t offset, Page* page){
     Page *temp;
+    int buf_index = -1;
 
     temp = is_in_buffer(table_id, offset);
 
@@ -1360,22 +1363,24 @@ void load_page_from_buffer(int table_id, off_t offset, Page* page){
     }
     // Page is not in buffer pool.
     else{
-        int buf_index;
-
-        buf_index = replace_page(table_id, page);
+        buf_index = replace_page(table_id);
 
         // Load from disk.
         load_page(table_id, offset, page);
         page->file_offset = offset; 
 
-        /* Setting new buffer */ 
-        // Page pointer is set already in replace_page function.
-        buf_mgr[buf_index].frame = page;
-        buf_mgr[buf_index].table_id = table_id;
-        buf_mgr[buf_index].page_offset = offset;
-        buf_mgr[buf_index].is_dirty = 0;
-        buf_mgr[buf_index].pin_count = 1; 
-        buf_mgr[buf_index].refbit = 1;
+        /* Not busy buffer pool */
+        // In case of busy buffer pool, just load page from disk.
+        if(buf_index != -1){
+            /* Setting new buffer */ 
+            // Page pointer is set already in replace_page function.
+            buf_mgr[buf_index].frame = page;
+            buf_mgr[buf_index].table_id = table_id;
+            buf_mgr[buf_index].page_offset = offset;
+            buf_mgr[buf_index].is_dirty = 0;
+            buf_mgr[buf_index].pin_count = 1; 
+            buf_mgr[buf_index].refbit = 1;
+        }
     }
 }
 
@@ -1399,11 +1404,12 @@ Page* is_in_buffer(int table_id, off_t offset){
 }
 
 int replace_page(int table_id){
-    // clock_hand, buf_size
+    /* Used variable : clock_hand, buf_size */
     Page *target_page = NULL;
-    int target_index = -1;
+    int target_index = -1, index = 0;
 
-    while(target_page != NULL){
+    // Spin only one circle.
+    while(target_page != NULL && index != buf_size){
         /* Check refernce bit */
         // Case : reference bit is off.
         if(buf_mgr[clock_hand].pin_count == 0 && buf_mgr[clock_hand].refbit == 0){
@@ -1430,20 +1436,52 @@ int replace_page(int table_id){
             // Move clock hand
             clock_hand = (clock_hand + 1) % buf_size;
         }
+        index++;
     }
 
     return target_index;
 }
 
-// Flush function
-void dirty_on(int table_id, off_t offset){
-    int i;
+/* Flush function */
+void dirty_on(int table_id, Page *page){
+    int i, buf_index = -1;
+    Page *temp;
 
-    for(i = 0; i < buf_size; i++){
-        if(buf_mgr[i].table_id == table_id && buf_mgr[i].page_offset == offset){
-            // Matched case
-            buf_mgr[i].is_dirty = 1;
-            break;
+    // Check if target page is in buffer
+    temp = is_in_buffer(table_id, page->file_offset);
+
+    if(temp != NULL){ 
+        for(i = 0; i < buf_size; i++){
+            if(buf_mgr[i].table_id == table_id && buf_mgr[i].page_offset == offset){
+                // Matched case
+                buf_mgr[i].is_dirty = 1;
+                break;
+            }
+        }
+    }
+    // Page is not in buffer
+    else{
+        buf_index = replace_page(table_id);
+
+        // Load from disk.
+        load_page(table_id, offset, page);
+        page->file_offset = offset; 
+
+        // In case of busy buffer pool, just flush page to disk.
+        if(buf_index == -1){
+            flush_page(table_id, page);
+        }
+        /* Not busy buffer pool */
+        else{
+            /* Setting new buffer */ 
+            // Page pointer is set already in replace_page function.
+            buf_mgr[buf_index].frame = page;
+            buf_mgr[buf_index].table_id = table_id;
+            buf_mgr[buf_index].page_offset = offset;
+            // Setting dirty bit
+            buf_mgr[buf_index].is_dirty = 1;
+            buf_mgr[buf_index].pin_count = 1; 
+            buf_mgr[buf_index].refbit = 1;
         }
     }
 }
