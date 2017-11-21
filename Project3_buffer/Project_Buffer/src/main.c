@@ -26,12 +26,12 @@ int main( int argc, char ** argv ) {
 		case 'i':
 			scanf("%" PRIu64 " %s", &input_key, input_value);
 			insert(table, input_key, input_value);
-			//print_tree(table);
+			print_tree(table);
 			break;
         case 'd':
 			scanf("%" PRIu64 "", &input_key);
 			delete(table, input_key);
-			//print_tree(table);
+			print_tree(table);
 			break;
 		case 'f':
 		case 'p':
@@ -43,7 +43,7 @@ int main( int argc, char ** argv ) {
 			return EXIT_SUCCESS;
 			break;
 		case 't':
-			//print_tree(table);
+			print_tree(table);
 			break;
         default:
 			usage_2();
