@@ -335,9 +335,11 @@ void find_and_print(uint64_t key) {
 	value_found = find(key);
 	if (value_found == NULL) {
 		printf("Record not found under key %" PRIu64 ".\n", key);
+        fflush(stdout);
     }
 	else {
 		printf("key %" PRIu64 ", value [%s].\n", key, value_found);
+        fflush(stdout);
         free(value_found);
     }
 }
@@ -759,6 +761,7 @@ int insert(uint64_t key, const char* value) {
 
 	if (dbheader.root_offset == 0) {
 		start_new_tree(key, value);
+        fsync(dbfile);
         return 0;
     }
 	
@@ -779,6 +782,7 @@ int insert(uint64_t key, const char* value) {
 	     */
         insert_into_leaf_after_splitting(&leaf_node, key, value);
     }
+    fsync(dbfile);
     return 0;
 }
 
@@ -1261,6 +1265,7 @@ int delete(uint64_t key) {
     find_leaf(key, &leaf_node);
 
     delete_entry((NodePage*)&leaf_node, key);
+    fsync(dbfile);
 
     return 0;
 }

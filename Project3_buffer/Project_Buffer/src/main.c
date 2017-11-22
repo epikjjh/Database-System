@@ -27,7 +27,7 @@ int main( int argc, char ** argv ) {
 	//usage_1();  
 	//usage_2();
 
-    init_db(1024);
+    init_db(10000);
     table = open_table("test.db");
 	//printf("> ");
 	while (scanf("%c", &instruction) != EOF) {
@@ -43,9 +43,10 @@ int main( int argc, char ** argv ) {
 			//print_tree(table);
 			break;
 		case 'f':
-		case 'p':
+		//case 'p':
 			scanf("%" PRIu64 "", &input_key);
 			find_and_print(table, input_key);
+            fflush(stdout);
 			break;
 		case 'q':
 			while (getchar() != (int)'\n');
