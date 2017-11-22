@@ -116,6 +116,7 @@ bool verbose_output = false;
 Buffer *buf_mgr;
 int buf_size = -1;
 int clock_hand = 0;
+int target_buf = 0;
 
 // FUNCTION PROTOTYPES.
 
@@ -270,6 +271,12 @@ int open_table(const char* filename) {
     } else {
         // DB file exist. Load header info
         load_page_from_buffer(i+1, 0, (Page*)(dbheader+i));
+
+        // In case of empty page.
+        if(dbheader[i].num_pages == 0){
+            dbheader[i].num_pages = 1;
+            dirty_on(i+1, (Page*)(dbheader + i));
+        }
         dbheader[i].file_offset = 0;
     }
 
@@ -1289,15 +1296,21 @@ int delete(int table_id, uint64_t key) {
 
 /* Project Buffer */
 int init_db(int num_buf){
+    int i;
+
     // Auto intialize
     buf_mgr = (Buffer *)calloc(num_buf, sizeof(Buffer)); 
 
     if(buf_mgr == NULL){
-        // Fail
+        /* Fail */
         return -1;
     }
 
-    // Success
+    /* Success */
+    // Memory allocation
+    for(i = 0; i < num_buf; i++){
+        buf_mgr[i].frame = (Page*)malloc(sizeof(Page));
+    }
     buf_size = num_buf;
 
     return 0;
@@ -1386,7 +1399,6 @@ void load_page_from_buffer(int table_id, off_t offset, Page* page){
             /* Setting new buffer */ 
             // Page index is set already in replace_page function.
             // Memory allocation & Memory copy
-            buf_mgr[buf_index].frame = (Page*)malloc(sizeof(Page));
             memcpy(buf_mgr[buf_index].frame, page, sizeof(Page));
 
             buf_mgr[buf_index].frame = page;
@@ -1410,21 +1422,25 @@ Page* is_in_buffer(int table_id, off_t offset, Page *page, int type){
     }
 
     for(i = 0; i < buf_size; i++){
-        if(buf_mgr[i].table_id == table_id && buf_mgr[i].page_offset == offset){
+        if(buf_mgr[target_buf].table_id == table_id && buf_mgr[target_buf].page_offset == offset){
             /* Matched case */
             // Type 1 : load
             if(type == 1){
-                buf_mgr[i].pin_count++;
+                buf_mgr[target_buf].pin_count++;
             }
             // Type 0 : flush
             else{
                 // Update buffer page
-                memcpy(buf_mgr[i].frame, page, sizeof(Page));
-                buf_mgr[i].is_dirty = 1;
-                buf_mgr[i].pin_count--;
+                memcpy(buf_mgr[target_buf].frame, page, sizeof(Page));
+                buf_mgr[target_buf].is_dirty = 1;
+                buf_mgr[target_buf].pin_count--;
+                if(buf_mgr[target_buf].pin_count < 0){
+                    buf_mgr[target_buf].pin_count = 0;
+                }
             }
-            return buf_mgr[i].frame;
+            return buf_mgr[target_buf].frame;
         }
+        target_buf = (target_buf + 1) % buf_size;
     }
 
     // Unmatched case
@@ -1452,12 +1468,10 @@ int replace_page(int table_id){
                 /* Flush page. */
                 flush_page(table_id, target_page);
             }
-
-            // Memory free
-            free(buf_mgr[clock_hand].frame);
-
             // Reinitialize : Evict
+            free(buf_mgr[clock_hand].frame);
             memset(buf_mgr+clock_hand, 0, sizeof(Buffer));
+            buf_mgr[clock_hand].frame = (Page*)malloc(sizeof(Page));
         }
 
         // Case : reference bit is on.
@@ -1479,7 +1493,7 @@ int replace_page(int table_id){
 /* Flush function */
 void dirty_on(int table_id, Page *page){
     int i, buf_index = -1;
-    Page *temp;
+    Page *temp = NULL;
 
     // Check if target page is in buffer
     /* Decrease pin count : Done in is_in_buffer function. */
@@ -1499,14 +1513,13 @@ void dirty_on(int table_id, Page *page){
             /* Setting new buffer */ 
             // Page pointer is set already in replace_page function.
             // Memory allocation & Memory copy
-            buf_mgr[buf_index].frame = (Page*)malloc(sizeof(Page));
             memcpy(buf_mgr[buf_index].frame, page, sizeof(Page));
             buf_mgr[buf_index].table_id = table_id;
             buf_mgr[buf_index].page_offset = page->file_offset;
             // Setting dirty bit
             buf_mgr[buf_index].is_dirty = 1;
-            buf_mgr[buf_index].pin_count = 1; 
-            buf_mgr[buf_index].refbit = 1;
+            buf_mgr[buf_index].pin_count = 0; 
+            buf_mgr[buf_index].refbit = 0;
         }
     }
 }
