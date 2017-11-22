@@ -1308,9 +1308,6 @@ int init_db(int num_buf){
 
     /* Success */
     // Memory allocation
-    for(i = 0; i < num_buf; i++){
-        buf_mgr[i].frame = (Page*)malloc(sizeof(Page));
-    }
     buf_size = num_buf;
 
     return 0;
@@ -1399,6 +1396,7 @@ void load_page_from_buffer(int table_id, off_t offset, Page* page){
             /* Setting new buffer */ 
             // Page index is set already in replace_page function.
             // Memory allocation & Memory copy
+            buf_mgr[buf_index].frame = (Page*)malloc(sizeof(Page));
             memcpy(buf_mgr[buf_index].frame, page, sizeof(Page));
 
             buf_mgr[buf_index].frame = page;
@@ -1453,7 +1451,7 @@ int replace_page(int table_id){
     int target_index = -1, index = 0;
 
     // Spin only one cycle.
-    while(target_page == NULL && index != buf_size){
+    while(target_page == NULL && index == buf_size){
         /* Check refernce bit */
         // Case : reference bit is off.
         if(buf_mgr[clock_hand].pin_count == 0 && buf_mgr[clock_hand].refbit == 0){
@@ -1469,9 +1467,7 @@ int replace_page(int table_id){
                 flush_page(table_id, target_page);
             }
             // Reinitialize : Evict
-            free(buf_mgr[clock_hand].frame);
             memset(buf_mgr+clock_hand, 0, sizeof(Buffer));
-            buf_mgr[clock_hand].frame = (Page*)malloc(sizeof(Page));
         }
 
         // Case : reference bit is on.
@@ -1513,6 +1509,7 @@ void dirty_on(int table_id, Page *page){
             /* Setting new buffer */ 
             // Page pointer is set already in replace_page function.
             // Memory allocation & Memory copy
+            buf_mgr[buf_index].frame = (Page*)malloc(sizeof(Page));
             memcpy(buf_mgr[buf_index].frame, page, sizeof(Page));
             buf_mgr[buf_index].table_id = table_id;
             buf_mgr[buf_index].page_offset = page->file_offset;

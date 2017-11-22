@@ -27,7 +27,7 @@ int main( int argc, char ** argv ) {
 	//usage_1();  
 	//usage_2();
 
-    init_db(1);
+    init_db(1024);
     table = open_table("test.db");
 	//printf("> ");
 	while (scanf("%c", &instruction) != EOF) {
