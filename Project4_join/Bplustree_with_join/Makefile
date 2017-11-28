@@ -2,7 +2,7 @@ CC=gcc
 AR=ar
 CFLAGS= -g --std=c99 -O0 -Wall
 LDFLAGS= 
-OBJS=bpt_ext.o buf.o conn.o delete.o disk.o helper.o insert.o table.o
+OBJS=bpt_ext.o buf.o conn.o delete.o disk.o helper.o insert.o table.o join.o
 
 NAME=bpt
 OUT_TEST=test

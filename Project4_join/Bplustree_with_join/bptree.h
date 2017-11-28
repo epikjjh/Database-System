@@ -183,6 +183,9 @@ int redistribute_nodes(table *t, npage *np, npage *neighbor, int neighbor_index,
 int delete_entry(table *t, npage *np, int64_t k, int idx);
 int delete_low(table *t, int64_t k); 
 
+//Join function
+int join_table(int table_id_1, int table_id_2, char *pathname);
+
 //Macro
 #define DEC_RET int ret = 0
 #define RET(x) do{\
