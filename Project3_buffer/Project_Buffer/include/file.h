@@ -138,7 +138,6 @@ typedef struct _Buffer{
     int table_id;
     off_t page_offset;
     int is_dirty;
-    int pin_count;
     // LRU clock structure
     int refbit;
 } Buffer;
@@ -146,10 +145,9 @@ typedef struct _Buffer{
 // Load function
 void load_page_from_buffer(int table_id, off_t offset, Page* page);
 
-Page* is_in_buffer(int table_id, off_t offset, Page *page, int type);
+Page* is_in_buffer(int table_id, off_t offset, Page *page);
 
 int replace_page(int table_id);
 
 // Flush function
-void dirty_on(int table_id, Page* page);
-
+void flush_page_to_buffer(int table_id, Page* page);
