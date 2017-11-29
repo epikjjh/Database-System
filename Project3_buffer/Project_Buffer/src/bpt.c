@@ -1297,9 +1297,12 @@ int delete(int table_id, uint64_t key) {
 /* Project Buffer */
 int init_db(int num_buf){
     int i;
-
     // Auto intialize
     buf_mgr = (Buffer *)calloc(num_buf, sizeof(Buffer)); 
+
+    for(i = 0; i < num_buf; i++){
+        buf_mgr[i].frame = (Page*)malloc(sizeof(Page));
+    }
 
     if(buf_mgr == NULL){
         /* Fail */
@@ -1371,7 +1374,7 @@ void load_page_from_buffer(int table_id, off_t offset, Page* page){
     Page *temp;
     int buf_index = -1;
 
-    temp = is_in_buffer(table_id, offset, page);
+    temp = check_buffer_for_load(table_id, offset);
 
     // Page is in buffer pool.
     if(temp != NULL){
@@ -1395,17 +1398,14 @@ void load_page_from_buffer(int table_id, off_t offset, Page* page){
         /* Setting new buffer */ 
         // Page index is set already in replace_page function.
         // Memory allocation & Memory copy
-        buf_mgr[buf_index].frame = (Page*)malloc(sizeof(Page));
         memcpy(buf_mgr[buf_index].frame, page, sizeof(Page));
-
-        buf_mgr[buf_index].frame = page;
         buf_mgr[buf_index].table_id = table_id;
         buf_mgr[buf_index].page_offset = offset;
         buf_mgr[buf_index].is_dirty = 0;
         buf_mgr[buf_index].refbit = 1;
     }
 }
-Page* is_in_buffer(int table_id, off_t offset, Page *page){
+Page* check_buffer_for_load(int table_id, off_t offset){
     int i;
 
     if(buf_size == -1){
@@ -1426,6 +1426,27 @@ Page* is_in_buffer(int table_id, off_t offset, Page *page){
     // Unmatched case
     return NULL;
 }
+int check_buffer_for_flush(int table_id, off_t offset){
+    int i;
+
+    if(buf_size == -1){
+        // Error case 
+        return -1;
+    }
+
+    for(i = 0; i < buf_size; i++){
+        if(buf_mgr[target_buf].table_id == table_id && buf_mgr[target_buf].page_offset == offset){
+
+            buf_mgr[target_buf].refbit = 1;
+
+            return target_buf;
+        }
+        target_buf = (target_buf + 1) % buf_size;
+    }
+
+    // Unmatched case
+    return -1;
+}
 
 int replace_page(int table_id){
     /* Used variable : clock_hand, buf_size */
@@ -1445,7 +1466,11 @@ int replace_page(int table_id){
                 flush_page(table_id, buf_mgr[clock_hand].frame);
             }
             // Reinitialize : Evict
-            memset(buf_mgr+clock_hand, 0, sizeof(Buffer));
+            memset(buf_mgr[clock_hand].frame, 0, sizeof(Page));
+            buf_mgr[clock_hand].table_id = 0;
+            buf_mgr[clock_hand].page_offset = 0;
+            buf_mgr[clock_hand].is_dirty = 0;
+            buf_mgr[clock_hand].refbit = 0;
         }
 
         // Case : reference bit is on.
@@ -1465,32 +1490,30 @@ int replace_page(int table_id){
 
 /* Flush function */
 void flush_page_to_buffer(int table_id, Page *page){
-    int i, buf_index = -1;
-    Page *temp = NULL;
+    int i, buf_index = -1, index = -1;
 
     // Check if target page is in buffer
     // Decrease pin count : Done in is_in_buffer function.
     // Dirty bit setting : Done in is_in_buffer function.
-    temp = is_in_buffer(table_id, page->file_offset, page);
+    index = check_buffer_for_flush(table_id, page->file_offset);
 
+    // Page is in buffer
+    if(index != -1){
+        memcpy(buf_mgr[target_buf].frame, page, sizeof(Page));
+        buf_mgr[target_buf].is_dirty = 1;
+    }
     // Page is not in buffer
-    if(temp == NULL){
+    else{
+        // Ref bit is already turned on in is_in_buffer.
         buf_index = replace_page(table_id);
         // Setting new buffer // 
         // Page pointer is set already in replace_page function.
         // Memory allocation & Memory copy
-        buf_mgr[buf_index].frame = (Page*)malloc(sizeof(Page));
         memcpy(buf_mgr[buf_index].frame, page, sizeof(Page));
         buf_mgr[buf_index].table_id = table_id;
         buf_mgr[buf_index].page_offset = page->file_offset;
         // Setting dirty bit
         buf_mgr[buf_index].is_dirty = 1;
         buf_mgr[buf_index].refbit = 1;
-    }
-    // Page is in buffer
-    else{
-        memcpy(buf_mgr[target_buf].frame, page, sizeof(Page));
-        buf_mgr[target_buf].is_dirty = 1;
-        // Ref bit is already turned on in is_in_buffer.
     }
 }
