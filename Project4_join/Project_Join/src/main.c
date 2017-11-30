@@ -9,20 +9,54 @@
 #include <string.h>
 #include <time.h>
 
+void input_table(int table_num, int num, const char *input_value);
+void check(int table_num, int size);
+
 // MAIN
 int main( int argc, char ** argv ) {
 	uint64_t input_key;
     char input_value[SIZE_VALUE];
 	char instruction;
-    int table = 0;
-
-    //license_notice();
-	//usage_1();  
-	//usage_2();
+    int table_1 = 0, table_2 = 0, size = 0;
 
     init_db(5);
-    table = open_table("test.db");
-	//printf("> ");
+    table_1 = open_table("table1.db");
+    table_2 = open_table("table2.db");
+    
+    printf("Welcome to join test\n");
+
+    printf("Input size and each value for table 1 : ");
+    scanf("%d %s", &size, input_value);
+    input_table(table_1, size, input_value);
+    /* Check */
+    check(table_1, size);
+
+    printf("Input size and each value for table 2 : ");
+    scanf("%d %s", &size, input_value);
+    input_table(table_2, size, input_value);
+    /* Check */
+    check(table_2, size);
+    
+    close_table(table_1);
+    close_table(table_2);
+
+	return EXIT_SUCCESS;
+}
+void input_table(int table_num, int size, const char *input_value){
+    int i;
+
+    for(i = 0; i < size; i++){
+        insert(table_num, i, input_value);
+    }
+}
+void check(int table_num, int size){
+    int i;
+
+    for(i = 0; i < size; i++){
+	    find_and_print(table_num, i);
+    }
+}
+/*
 	while (scanf("%c", &instruction) != EOF) {
 		switch (instruction) {
 		case 'i':
@@ -53,11 +87,5 @@ int main( int argc, char ** argv ) {
 			break;
 		}
 		while (getchar() != (int)'\n');
-		//printf("> ");
 	}
-	//printf("\n");
-
-    close_table(table);
-
-	return EXIT_SUCCESS;
-}
+*/
