@@ -1528,7 +1528,10 @@ void flush_page_to_buffer(int table_id, Page *page){
 int join_table(int table_id_1, int table_id_2, char *pathname){
     FILE *r_fp;
     uint64_t num_1 = -1, num_2 = -1, min_1 = -1, min_2 = -1, max_1 = -1, max_2 = -1;
-    LeafPage leaf_1, leaf_2;
+    LeafPage *leaf_1, *leaf_2;
+    off_t comp_sib_1, comp_sib_2;
+    int comp_num_1, comp_num_2;
+    uint64_t comp_key_1, comp_key_2;
 
     /* Open file where result table will be written */
     if((r_fp = fopen(pathname, "wt")) == NULL){
@@ -1561,22 +1564,50 @@ int join_table(int table_id_1, int table_id_2, char *pathname){
     if(min_1 < min_2){
         // Table 1 : cut off
         // Table 2 : just load first leaf page
-        find_leaf(table_id_1, min_2, &leaf_1);
-        find_leaf(table_id_2, min_2, &leaf_2);
+        find_leaf(table_id_1, min_2, leaf_1);
+        find_leaf(table_id_2, min_2, leaf_2);
     }
     // Case : Cut off table 2
     else{
         // Table 1 : just load fisrt leaf page
         // Table 2 : cut off
-        find_leaf(table_id_1, min_1, &leaf_1);
-        find_leaf(table_id_2, min_1, &leaf_2);
+        find_leaf(table_id_1, min_1, leaf_1);
+        find_leaf(table_id_2, min_1, leaf_2);
     }
+
+    // Initial condition
+
+    comp_sib_1 = leaf_1->sibling;
+    comp_sib_2 = leaf_2->sibling;
+    comp_num_1 = 0;
+    comp_num_2 = 0;
+    comp_key_1 = LEAF_KEY(leaf_1, comp_num_1);
+    comp_key_2 = LEAF_KEY(leaf_2, comp_num_2);
 
     /*
         Loop start : terminate condition
-    
+        -> Until rightmost sibling & last key ( Checking via number of keys)
     */
 
+    while((comp_sib_1 == 0 && com_num_1 == leaf_1->num_keys) || (comp_sib_2 == 0 && com_num_2 == leaf_2->num_keys)){
+        /* Compare & produce result */
+        
+        // Compare
+        while(comp_key_1 < comp_key_2){
+        
+        }
+        while(comp_key_1 > comp_key_2){
+
+        }
+
+        /* Produce */
+        // Notice that two tables are on unique key condition.
+        fprintf(r_fp, "%" PRIu64 ",%s," "%" PRIu64 ",%s\n", comp_key_1, LEAF_VALUE(leaf_1, comp_num_1), comp_key_2, LEAF_VALUE(leaf_2, comp_num_2));
+
+        // Advance each key
+        
+
+    }
 
     /* Result writing format
     uint64_t i = 1, j = 2;
