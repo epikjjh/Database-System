@@ -1331,15 +1331,21 @@ int close_table(int table_id){
                 flush_page(table_id, buf_mgr[i].frame);
             }
 
-            // Memory free
-            free(buf_mgr[i].frame);
             // Reinitialize : Evict
-            memset(buf_mgr+i, 0, sizeof(Buffer));
+            memset(buf_mgr[i].frame, 0, sizeof(Page));
+            buf_mgr[i].table_id = 0;
+            buf_mgr[i].page_offset = 0;
+            buf_mgr[i].is_dirty = 0;
+            buf_mgr[i].refbit = 0;
+
         }
     }
 
     // Discard the table id.
     table_ids[table_id -1] = 0;
+
+    // Close file
+    close_db(table_id);
 
     return 0;
 }

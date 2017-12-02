@@ -1,4 +1,4 @@
-cscope 15 $HOME/mysql/Lab/Project3_buffer/Project_Buffer -q 0000000235 0000037179
+cscope 15 $HOME/mysql/Lab/Project4_join/Project_Join -q 0000000251 0000038967
 	@include/bpt.h
 
 1 #iâdeà
@@ -595,6 +595,26 @@ Page
 ·ge
 );
 
+162 
+još_bË
+(
+bË_id_1
+, 
+bË_id_2
+, *
+·thÇme
+);
+
+164 
+bË_šfo
+(
+bË_id
+, *
+num_keys
+, *
+max_key
+);
+
 	@src/bpt.c
 
 4 
@@ -733,7 +753,7 @@ dbh—d”
 dbfe
 [10];
 
-93 
+93 
 	gbË_ids
 [10] = {0,};
 
@@ -5379,7 +5399,11 @@ key
 num_buf
 ){
 
-1300 
+1299 
+i
+;
+
+1301 
 buf_mgr
  = (
 Bufãr
@@ -5389,33 +5413,51 @@ Bufãr
 num_buf
 , (Buffer));
 
-1302 if(
+1303 
+i
+ = 0; i < 
+num_buf
+; i++){
+
+1304 
+buf_mgr
+[
+i
+].
+äame
+ = (
+Page
+*)
+	`m®loc
+((Page));
+
+1307 if(
 buf_mgr
  =ğ
 NULL
 ){
 
-1309 
+1314 
 buf_size
  = 
 num_buf
 ;
 
-1312 
+1317 
 	}
 }
 
-1314 
+1319 
 	$şo£_bË
 (
 bË_id
 ){
 
-1315 
+1320 
 i
 ;
 
-1318 if(
+1323 if(
 bË_id
  < 1 ||abË_id > 10 || 
 buf_size
@@ -5425,13 +5467,13 @@ buf_mgr
 NULL
 ){
 
-1322 
+1327 
 i
  = 0; i < 
 buf_size
 ; i++){
 
-1323 if(
+1328 if(
 buf_mgr
 [
 i
@@ -5439,7 +5481,7 @@ i
 bË_id
  ==able_id){
 
-1325 if(
+1330 if(
 buf_mgr
 [
 i
@@ -5447,7 +5489,7 @@ i
 is_dœty
  == 1){
 
-1326 
+1331 
 	`æush_·ge
 (
 bË_id
@@ -5459,47 +5501,77 @@ i
 äame
 );
 
-1330 
-	`ä“
+1334 
+	`mem£t
 (
 buf_mgr
 [
 i
 ].
 äame
-);
-
-1332 
-	`mem£t
-(
-buf_mgr
-+
-i
 , 0, (
-Bufãr
+Page
 ));
 
+1335 
+buf_mgr
+[
+i
+].
+bË_id
+ = 0;
+
+1336 
+buf_mgr
+[
+i
+].
+·ge_off£t
+ = 0;
+
 1337 
+buf_mgr
+[
+i
+].
+is_dœty
+ = 0;
+
+1338 
+buf_mgr
+[
+i
+].
+»fb™
+ = 0;
+
+1343 
 bË_ids
 [
 bË_id
  -1] = 0;
 
-1340 
+1346 
+	`şo£_db
+(
+bË_id
+);
+
+1349 
 	}
 }
 
-1342 
+1351 
 	$shutdown_db
 (){
 
-1343 
+1352 
 i
 ,
 bË_id
  = -1;
 
-1346 if(
+1355 if(
 buf_size
  =ğ-1 || 
 buf_mgr
@@ -5507,13 +5579,13 @@ buf_mgr
 NULL
 ){
 
-1350 
+1359 
 i
  = 0; i < 
 buf_size
 ; i++){
 
-1352 if(
+1361 if(
 buf_mgr
 [
 i
@@ -5521,7 +5593,7 @@ i
 is_dœty
  == 1){
 
-1353 
+1362 
 bË_id
  = 
 buf_mgr
@@ -5529,7 +5601,7 @@ buf_mgr
 i
 ].table_id;
 
-1354 
+1363 
 	`æush_·ge
 (
 bË_id
@@ -5541,7 +5613,7 @@ i
 äame
 );
 
-1357 if(1 <ğ
+1366 if(1 <ğ
 buf_mgr
 [
 i
@@ -5549,7 +5621,7 @@ i
 bË_id
  && buf_mgr[i].table_id <= 10){
 
-1358 
+1367 
 	`ä“
 (
 buf_mgr
@@ -5559,17 +5631,17 @@ i
 äame
 );
 
-1363 
+1372 
 	`ä“
 (
 buf_mgr
 );
 
-1366 
+1375 
 	}
 }
 
-1368 
+1377 
 	$lßd_·ge_äom_bufãr
 (
 bË_id
@@ -5583,17 +5655,17 @@ Page
 ·ge
 ){
 
-1369 
+1378 
 Page
  *
 ‹mp
 ;
 
-1370 
+1379 
 buf_šdex
  = -1;
 
-1372 
+1381 
 ‹mp
  = 
 	`check_bufãr_fÜ_lßd
@@ -5603,13 +5675,13 @@ buf_šdex
 off£t
 );
 
-1375 if(
+1384 if(
 ‹mp
  !ğ
 NULL
 ){
 
-1377 
+1386 
 	`memıy
 (
 ·ge
@@ -5619,7 +5691,7 @@ NULL
 Page
 ));
 
-1378 
+1387 
 ·ge
 ->
 fe_off£t
@@ -5627,7 +5699,7 @@ fe_off£t
 off£t
 ;
 
-1385 
+1394 
 buf_šdex
  = 
 	`»¶aû_·ge
@@ -5635,7 +5707,7 @@ buf_šdex
 bË_id
 );
 
-1388 
+1397 
 	`lßd_·ge
 (
 bË_id
@@ -5645,7 +5717,7 @@ off£t
 ·ge
 );
 
-1389 
+1398 
 ·ge
 ->
 fe_off£t
@@ -5653,19 +5725,7 @@ fe_off£t
 off£t
 ;
 
-1396 
-buf_mgr
-[
-buf_šdex
-].
-äame
- = (
-Page
-*)
-	`m®loc
-((Page));
-
-1397 
+1405 
 	`memıy
 (
 buf_mgr
@@ -5679,17 +5739,7 @@ buf_šdex
 Page
 ));
 
-1399 
-buf_mgr
-[
-buf_šdex
-].
-äame
- = 
-·ge
-;
-
-1400 
+1406 
 buf_mgr
 [
 buf_šdex
@@ -5697,7 +5747,7 @@ buf_šdex
 bË_id
  =able_id;
 
-1401 
+1407 
 buf_mgr
 [
 buf_šdex
@@ -5707,7 +5757,7 @@ buf_šdex
 off£t
 ;
 
-1402 
+1408 
 buf_mgr
 [
 buf_šdex
@@ -5715,7 +5765,7 @@ buf_šdex
 is_dœty
  = 0;
 
-1403 
+1409 
 buf_mgr
 [
 buf_šdex
@@ -5723,11 +5773,11 @@ buf_šdex
 »fb™
  = 1;
 
-1405 
+1411 
 	}
 }
 
-1406 
+1412 
 Page
 * 
 	$check_bufãr_fÜ_lßd
@@ -5739,25 +5789,25 @@ off_t
 off£t
 ){
 
-1407 
+1413 
 i
 ;
 
-1409 if(
+1415 if(
 buf_size
  == -1){
 
-1411  
+1417  
 NULL
 ;
 
-1414 
+1420 
 i
  = 0; i < 
 buf_size
 ; i++){
 
-1415 if(
+1421 if(
 buf_mgr
 [
 rg‘_buf
@@ -5769,7 +5819,7 @@ buf_mgr
 off£t
 ){
 
-1417 
+1423 
 buf_mgr
 [
 rg‘_buf
@@ -5777,7 +5827,7 @@ buf_mgr
 »fb™
  = 1;
 
-1419  
+1425  
 buf_mgr
 [
 rg‘_buf
@@ -5785,21 +5835,21 @@ buf_mgr
 äame
 ;
 
-1421 
+1427 
 rg‘_buf
  = (rg‘_buà+ 1è% 
 buf_size
 ;
 
-1425  
+1431  
 NULL
 ;
 
-1426 
+1432 
 	}
 }
 
-1427 
+1433 
 	$check_bufãr_fÜ_æush
 (
 bË_id
@@ -5809,21 +5859,21 @@ off_t
 off£t
 ){
 
-1428 
+1434 
 i
 ;
 
-1430 if(
+1436 if(
 buf_size
  == -1){
 
-1435 
+1441 
 i
  = 0; i < 
 buf_size
 ; i++){
 
-1436 if(
+1442 if(
 buf_mgr
 [
 rg‘_buf
@@ -5835,7 +5885,7 @@ buf_mgr
 off£t
 ){
 
-1438 
+1444 
 buf_mgr
 [
 rg‘_buf
@@ -5843,35 +5893,35 @@ buf_mgr
 »fb™
  = 1;
 
-1440  
+1446  
 rg‘_buf
 ;
 
-1442 
+1448 
 rg‘_buf
  = (rg‘_buà+ 1è% 
 buf_size
 ;
 
-1447 
+1453 
 	}
 }
 
-1449 
+1455 
 	$»¶aû_·ge
 (
 bË_id
 ){
 
-1451 
+1457 
 rg‘_šdex
  = -1;
 
-1454 
+1460 
 rg‘_šdex
  == -1){
 
-1457 if(
+1463 if(
 buf_mgr
 [
 şock_hªd
@@ -5879,13 +5929,13 @@ buf_mgr
 »fb™
  == 0){
 
-1459 
+1465 
 rg‘_šdex
  = 
 şock_hªd
 ;
 
-1462 if(
+1468 if(
 buf_mgr
 [
 şock_hªd
@@ -5893,7 +5943,7 @@ buf_mgr
 is_dœty
  == 1){
 
-1464 
+1470 
 	`æush_·ge
 (
 bË_id
@@ -5905,27 +5955,19 @@ buf_mgr
 äame
 );
 
-1467 
-	`ä“
+1473 
+	`mem£t
 (
 buf_mgr
 [
 şock_hªd
 ].
 äame
-);
+, 0, (
+Page
+));
 
-1468 
-buf_mgr
-[
-şock_hªd
-].
-äame
- = 
-NULL
-;
-
-1469 
+1474 
 buf_mgr
 [
 şock_hªd
@@ -5933,7 +5975,7 @@ buf_mgr
 bË_id
  = 0;
 
-1470 
+1475 
 buf_mgr
 [
 şock_hªd
@@ -5941,7 +5983,7 @@ buf_mgr
 ·ge_off£t
  = 0;
 
-1471 
+1476 
 buf_mgr
 [
 şock_hªd
@@ -5949,7 +5991,7 @@ buf_mgr
 is_dœty
  = 0;
 
-1472 
+1477 
 buf_mgr
 [
 şock_hªd
@@ -5957,7 +5999,7 @@ buf_mgr
 »fb™
  = 0;
 
-1478 if(
+1483 if(
 buf_mgr
 [
 şock_hªd
@@ -5965,7 +6007,7 @@ buf_mgr
 »fb™
  == 1){
 
-1479 
+1484 
 buf_mgr
 [
 şock_hªd
@@ -5973,21 +6015,21 @@ buf_mgr
 »fb™
  = 0;
 
-1483 
+1488 
 şock_hªd
  = (şock_hªd + 1è% 
 buf_size
 ;
 
-1487  
+1492  
 rg‘_šdex
 ;
 
-1488 
+1493 
 	}
 }
 
-1491 
+1496 
 	$æush_·ge_to_bufãr
 (
 bË_id
@@ -5997,7 +6039,7 @@ Page
 ·ge
 ){
 
-1492 
+1497 
 i
 , 
 buf_šdex
@@ -6005,15 +6047,7 @@ buf_šdex
 šdex
  = -1;
 
-1493 
-Page
- *
-‹mp
- = 
-NULL
-;
-
-1498 
+1502 
 šdex
  = 
 	`check_bufãr_fÜ_æush
@@ -6025,11 +6059,11 @@ NULL
 fe_off£t
 );
 
-1501 if(
+1505 if(
 šdex
  != -1){
 
-1502 
+1506 
 	`memıy
 (
 buf_mgr
@@ -6043,7 +6077,7 @@ buf_mgr
 Page
 ));
 
-1503 
+1507 
 buf_mgr
 [
 rg‘_buf
@@ -6051,7 +6085,7 @@ buf_mgr
 is_dœty
  = 1;
 
-1508 
+1512 
 buf_šdex
  = 
 	`»¶aû_·ge
@@ -6059,19 +6093,7 @@ buf_šdex
 bË_id
 );
 
-1512 
-buf_mgr
-[
-buf_šdex
-].
-äame
- = (
-Page
-*)
-	`m®loc
-((Page));
-
-1513 
+1516 
 	`memıy
 (
 buf_mgr
@@ -6085,7 +6107,7 @@ buf_šdex
 Page
 ));
 
-1514 
+1517 
 buf_mgr
 [
 buf_šdex
@@ -6093,7 +6115,7 @@ buf_šdex
 bË_id
  =able_id;
 
-1515 
+1518 
 buf_mgr
 [
 buf_šdex
@@ -6105,7 +6127,7 @@ buf_šdex
 fe_off£t
 ;
 
-1517 
+1520 
 buf_mgr
 [
 buf_šdex
@@ -6113,7 +6135,7 @@ buf_šdex
 is_dœty
  = 1;
 
-1518 
+1521 
 buf_mgr
 [
 buf_šdex
@@ -6121,7 +6143,259 @@ buf_šdex
 »fb™
  = 1;
 
-1520 
+1523 
+	}
+}
+
+1528 
+	$još_bË
+(
+bË_id_1
+, 
+bË_id_2
+, *
+·thÇme
+){
+
+1529 
+FILE
+ *
+r_å
+;
+
+1530 
+num_1
+ = -1, 
+num_2
+ = -1, 
+max_1
+ = -1, 
+max_2
+ = -1;
+
+1533 if((
+r_å
+ = 
+	`fİ’
+(
+·thÇme
+, "wt")è=ğ
+NULL
+){
+
+1538 
+	`bË_šfo
+(
+bË_id_1
+, &
+num_1
+, &
+max_1
+);
+
+1539 
+	`bË_šfo
+(
+bË_id_2
+, &
+num_2
+, &
+max_2
+);
+
+1542 
+	`´štf
+("%d %d\n", 
+num_1
+, 
+max_1
+);
+
+1543 
+	`´štf
+("%d %d\n", 
+num_2
+, 
+max_2
+);
+
+1545 
+	}
+}
+
+1546 
+	$bË_šfo
+(
+bË_id
+, *
+num_keys
+, *
+max_key
+){
+
+1547 
+H—d”Page
+ 
+‹mp_h—d”
+;
+
+1548 
+NodePage
+ 
+·ge
+;
+
+1549 
+L—fPage
+ *
+‹mp_Ëaf
+;
+
+1550 
+off_t
+ 
+‹mp_siblšg
+;
+
+1553 
+	`lßd_·ge_äom_bufãr
+(
+bË_id
+, 0, (
+Page
+*)(&
+‹mp_h—d”
+));
+
+1556 if(
+‹mp_h—d”
+.
+roÙ_off£t
+ == 0){
+
+1557 *
+num_keys
+ = 0;
+
+1558 *
+max_key
+ = 0;
+
+1564 
+	`lßd_·ge_äom_bufãr
+(
+bË_id
+, 
+‹mp_h—d”
+.
+roÙ_off£t
+, (
+Page
+*)&
+·ge
+);
+
+1567 !
+·ge
+.
+is_Ëaf
+){
+
+1568 
+IÁ”ÇlPage
+* 
+š‹º®_node
+ = (IÁ”ÇlPage*)&
+·ge
+;
+
+1570 
+	`lßd_·ge_äom_bufãr
+(
+bË_id
+, 
+	`INTERNAL_OFFSET
+(
+š‹º®_node
+, 0), (
+Page
+*)&
+·ge
+);
+
+1577 
+‹mp_Ëaf
+ = (
+L—fPage
+ *)&
+·ge
+;
+
+1579 *
+num_keys
+ = 
+‹mp_Ëaf
+->num_keys;
+
+1580 *
+max_key
+ = 
+	`LEAF_KEY
+(
+‹mp_Ëaf
+,emp_Ëaf->
+num_keys
+ - 1);
+
+1581 
+‹mp_siblšg
+ = 
+‹mp_Ëaf
+->
+siblšg
+;
+
+1583 
+‹mp_siblšg
+ != 0){
+
+1585 
+	`lßd_·ge_äom_bufãr
+(
+bË_id
+, 
+‹mp_siblšg
+, (
+Page
+*)
+‹mp_Ëaf
+);
+
+1587 *
+num_keys
+ +ğ
+‹mp_Ëaf
+->num_keys;
+
+1588 *
+max_key
+ = 
+	`LEAF_KEY
+(
+‹mp_Ëaf
+,emp_Ëaf->
+num_keys
+ - 1);
+
+1589 
+‹mp_siblšg
+ = 
+‹mp_Ëaf
+->
+siblšg
+;
+
+1592 
 	}
 }
 
@@ -6167,7 +6441,7 @@ H—d”Page
 
 11 
 	gdbfe
-[10];
+[10] = {0,};
 
 15 
 off_t
@@ -6557,7 +6831,25 @@ PAGE_SIZE
 	~<time.h
 >
 
-13 
+12 
+šput_bË
+(
+bË_num
+, 
+num
+, cÚ¡ *
+šput_v®ue
+);
+
+13 
+check
+(
+bË_num
+, 
+size
+);
+
+16 
 	$maš
 Ğ
 ¬gc
@@ -6565,129 +6857,157 @@ PAGE_SIZE
 ¬gv
  ) {
 
-14 
+17 
 ušt64_t
  
 šput_key
 ;
 
-15 
+18 
 šput_v®ue
 [
 SIZE_VALUE
 ];
 
-16 
+19 
 š¡ruùiÚ
 ;
 
-17 
-bË
+20 
+bË_1
+ = 0, 
+bË_2
+ = 0, 
+size
  = 0;
 
-23 
+22 
 	`š™_db
 (1);
 
 24 
-bË
+bË_1
  = 
 	`İ’_bË
-("test.db");
+("table1.db");
 
-26 
-	`sÿnf
-("%c", &
-š¡ruùiÚ
-è!ğ
-EOF
-) {
-
-27 
-š¡ruùiÚ
-) {
-
-29 
-	`sÿnf
-("%" 
-PRIu64
- " %s", &
-šput_key
-, 
-šput_v®ue
-);
+27 
+	`´štf
+("Welcomeo joinest\n");
 
 30 
-	`š£¹
-(
-bË
-, 
-šput_key
+	`´štf
+("Input size‡ndƒach value forable 1 : ");
+
+31 
+	`sÿnf
+("%d %s", &
+size
 , 
 šput_v®ue
 );
 
-34 
-	`sÿnf
-("%" 
-PRIu64
- "", &
-šput_key
-);
-
-35 
-	`d–‘e
+32 
+	`šput_bË
 (
-bË
+bË_1
 , 
-šput_key
+size
+, 
+šput_v®ue
 );
 
 40 
-	`sÿnf
-("%" 
-PRIu64
- "", &
-šput_key
-);
-
-41 
-	`fšd_ªd_´št
+	`check
 (
-bË
+bË_1
 , 
-šput_key
+size
 );
 
-42 
-	`fæush
+45 
+	`još_bË
 (
-¡dout
-);
+bË_1
+, 
+bË_2
+, "result.txt");
 
-45 
-	`g‘ch¬
-() != ()'\n');
-
-46  
-EXIT_SUCCESS
-;
-
-55 
-	`g‘ch¬
-() != ()'\n');
-
-60 
+47 
 	`şo£_bË
 (
-bË
+bË_1
 );
 
-62  
+50  
 EXIT_SUCCESS
 ;
 
+51 
+	}
+}
+
+52 
+	$šput_bË
+(
+bË_num
+, 
+size
+, cÚ¡ *
+šput_v®ue
+){
+
+53 
+i
+;
+
+55 
+i
+ = 0; i < 
+size
+; i++){
+
+56 
+	`š£¹
+(
+bË_num
+, 
+i
+, 
+šput_v®ue
+);
+
+58 
+	}
+}
+
+59 
+	$check
+(
+bË_num
+, 
+size
+){
+
+60 
+i
+;
+
+62 
+i
+ = 0; i < 
+size
+; i++){
+
 63 
+	`fšd_ªd_´št
+(
+bË_num
+, 
+i
+);
+
+65 
 	}
 }
 

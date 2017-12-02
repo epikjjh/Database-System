@@ -156,3 +156,9 @@ int replace_page(int table_id);
 
 // Flush function
 void flush_page_to_buffer(int table_id, Page* page);
+
+
+/* Project Join */
+int join_table(int table_id_1, int table_id_2, char *pathname);
+
+void table_info(int table_id, int *num_keys, int *max_key);

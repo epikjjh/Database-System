@@ -1,4 +1,4 @@
-cscope 15 $HOME/mysql/Lab/Project3_buffer/Project_Buffer -q 0000000235 0000037179
+cscope 15 $HOME/mysql/Lab/Project3_buffer/Project_Buffer -q 0000000235 0000037193
 	@include/bpt.h
 
 1 #i‚de‡
@@ -5379,7 +5379,11 @@ key
 num_buf
 ){
 
-1300 
+1299 
+i
+;
+
+1301 
 buf_mgr
  = (
 Buf„r
@@ -5389,33 +5393,51 @@ Buf„r
 num_buf
 , (Buffer));
 
-1302 if(
+1303 
+i
+ = 0; i < 
+num_buf
+; i++){
+
+1304 
+buf_mgr
+[
+i
+].
+‰ame
+ = (
+Page
+*)
+	`mÆloc
+((Page));
+
+1307 if(
 buf_mgr
  =
 NULL
 ){
 
-1309 
+1314 
 buf_size
  = 
 num_buf
 ;
 
-1312 
+1317 
 	}
 }
 
-1314 
+1319 
 	$˛o£_èbÀ
 (
 èbÀ_id
 ){
 
-1315 
+1320 
 i
 ;
 
-1318 if(
+1323 if(
 èbÀ_id
  < 1 ||ÅabÀ_id > 10 || 
 buf_size
@@ -5425,13 +5447,13 @@ buf_mgr
 NULL
 ){
 
-1322 
+1327 
 i
  = 0; i < 
 buf_size
 ; i++){
 
-1323 if(
+1328 if(
 buf_mgr
 [
 i
@@ -5439,7 +5461,7 @@ i
 èbÀ_id
  ==Åable_id){
 
-1325 if(
+1330 if(
 buf_mgr
 [
 i
@@ -5447,7 +5469,7 @@ i
 is_dúty
  == 1){
 
-1326 
+1331 
 	`Êush_∑ge
 (
 èbÀ_id
@@ -5459,47 +5481,77 @@ i
 ‰ame
 );
 
-1330 
-	`‰ì
+1335 
+	`mem£t
 (
 buf_mgr
 [
 i
 ].
 ‰ame
-);
-
-1332 
-	`mem£t
-(
-buf_mgr
-+
-i
 , 0, (
-Buf„r
+Page
 ));
 
+1336 
+buf_mgr
+[
+i
+].
+èbÀ_id
+ = 0;
+
 1337 
+buf_mgr
+[
+i
+].
+∑ge_off£t
+ = 0;
+
+1338 
+buf_mgr
+[
+i
+].
+is_dúty
+ = 0;
+
+1339 
+buf_mgr
+[
+i
+].
+ªfbô
+ = 0;
+
+1345 
 èbÀ_ids
 [
 èbÀ_id
  -1] = 0;
 
-1340 
+1348 
+	`˛o£_db
+(
+èbÀ_id
+);
+
+1351 
 	}
 }
 
-1342 
+1353 
 	$shutdown_db
 (){
 
-1343 
+1354 
 i
 ,
 èbÀ_id
  = -1;
 
-1346 if(
+1357 if(
 buf_size
  =-1 || 
 buf_mgr
@@ -5507,13 +5559,13 @@ buf_mgr
 NULL
 ){
 
-1350 
+1361 
 i
  = 0; i < 
 buf_size
 ; i++){
 
-1352 if(
+1363 if(
 buf_mgr
 [
 i
@@ -5521,7 +5573,7 @@ i
 is_dúty
  == 1){
 
-1353 
+1364 
 èbÀ_id
  = 
 buf_mgr
@@ -5529,7 +5581,7 @@ buf_mgr
 i
 ].table_id;
 
-1354 
+1365 
 	`Êush_∑ge
 (
 èbÀ_id
@@ -5541,7 +5593,7 @@ i
 ‰ame
 );
 
-1357 if(1 <
+1368 if(1 <
 buf_mgr
 [
 i
@@ -5549,7 +5601,7 @@ i
 èbÀ_id
  && buf_mgr[i].table_id <= 10){
 
-1358 
+1369 
 	`‰ì
 (
 buf_mgr
@@ -5559,17 +5611,17 @@ i
 ‰ame
 );
 
-1363 
+1374 
 	`‰ì
 (
 buf_mgr
 );
 
-1366 
+1377 
 	}
 }
 
-1368 
+1379 
 	$lﬂd_∑ge_‰om_buf„r
 (
 èbÀ_id
@@ -5583,17 +5635,17 @@ Page
 ∑ge
 ){
 
-1369 
+1380 
 Page
  *
 ãmp
 ;
 
-1370 
+1381 
 buf_ödex
  = -1;
 
-1372 
+1383 
 ãmp
  = 
 	`check_buf„r_f‹_lﬂd
@@ -5603,13 +5655,13 @@ buf_ödex
 off£t
 );
 
-1375 if(
+1386 if(
 ãmp
  !
 NULL
 ){
 
-1377 
+1388 
 	`mem˝y
 (
 ∑ge
@@ -5618,32 +5670,6 @@ NULL
 , (
 Page
 ));
-
-1378 
-∑ge
-->
-fûe_off£t
- = 
-off£t
-;
-
-1385 
-buf_ödex
- = 
-	`ª∂a˚_∑ge
-(
-èbÀ_id
-);
-
-1388 
-	`lﬂd_∑ge
-(
-èbÀ_id
-, 
-off£t
-, 
-∑ge
-);
 
 1389 
 ∑ge
@@ -5654,18 +5680,32 @@ off£t
 ;
 
 1396 
-buf_mgr
-[
 buf_ödex
-].
-‰ame
- = (
-Page
-*)
-	`mÆloc
-((Page));
+ = 
+	`ª∂a˚_∑ge
+(
+èbÀ_id
+);
 
-1397 
+1399 
+	`lﬂd_∑ge
+(
+èbÀ_id
+, 
+off£t
+, 
+∑ge
+);
+
+1400 
+∑ge
+->
+fûe_off£t
+ = 
+off£t
+;
+
+1407 
 	`mem˝y
 (
 buf_mgr
@@ -5679,17 +5719,7 @@ buf_ödex
 Page
 ));
 
-1399 
-buf_mgr
-[
-buf_ödex
-].
-‰ame
- = 
-∑ge
-;
-
-1400 
+1408 
 buf_mgr
 [
 buf_ödex
@@ -5697,7 +5727,7 @@ buf_ödex
 èbÀ_id
  =Åable_id;
 
-1401 
+1409 
 buf_mgr
 [
 buf_ödex
@@ -5707,7 +5737,7 @@ buf_ödex
 off£t
 ;
 
-1402 
+1410 
 buf_mgr
 [
 buf_ödex
@@ -5715,7 +5745,7 @@ buf_ödex
 is_dúty
  = 0;
 
-1403 
+1411 
 buf_mgr
 [
 buf_ödex
@@ -5723,11 +5753,11 @@ buf_ödex
 ªfbô
  = 1;
 
-1405 
+1413 
 	}
 }
 
-1406 
+1414 
 Page
 * 
 	$check_buf„r_f‹_lﬂd
@@ -5739,25 +5769,25 @@ off_t
 off£t
 ){
 
-1407 
+1415 
 i
 ;
 
-1409 if(
+1417 if(
 buf_size
  == -1){
 
-1411  
+1419  
 NULL
 ;
 
-1414 
+1422 
 i
  = 0; i < 
 buf_size
 ; i++){
 
-1415 if(
+1423 if(
 buf_mgr
 [
 èrgë_buf
@@ -5769,7 +5799,7 @@ buf_mgr
 off£t
 ){
 
-1417 
+1425 
 buf_mgr
 [
 èrgë_buf
@@ -5777,7 +5807,7 @@ buf_mgr
 ªfbô
  = 1;
 
-1419  
+1427  
 buf_mgr
 [
 èrgë_buf
@@ -5785,21 +5815,21 @@ buf_mgr
 ‰ame
 ;
 
-1421 
+1429 
 èrgë_buf
  = (èrgë_bu‡+ 1Ë% 
 buf_size
 ;
 
-1425  
+1433  
 NULL
 ;
 
-1426 
+1434 
 	}
 }
 
-1427 
+1435 
 	$check_buf„r_f‹_Êush
 (
 èbÀ_id
@@ -5809,21 +5839,21 @@ off_t
 off£t
 ){
 
-1428 
+1436 
 i
 ;
 
-1430 if(
+1438 if(
 buf_size
  == -1){
 
-1435 
+1443 
 i
  = 0; i < 
 buf_size
 ; i++){
 
-1436 if(
+1444 if(
 buf_mgr
 [
 èrgë_buf
@@ -5835,7 +5865,7 @@ buf_mgr
 off£t
 ){
 
-1438 
+1446 
 buf_mgr
 [
 èrgë_buf
@@ -5843,35 +5873,35 @@ buf_mgr
 ªfbô
  = 1;
 
-1440  
+1448  
 èrgë_buf
 ;
 
-1442 
+1450 
 èrgë_buf
  = (èrgë_bu‡+ 1Ë% 
 buf_size
 ;
 
-1447 
+1455 
 	}
 }
 
-1449 
+1457 
 	$ª∂a˚_∑ge
 (
 èbÀ_id
 ){
 
-1451 
+1459 
 èrgë_ödex
  = -1;
 
-1454 
+1462 
 èrgë_ödex
  == -1){
 
-1457 if(
+1465 if(
 buf_mgr
 [
 ˛ock_h™d
@@ -5879,13 +5909,13 @@ buf_mgr
 ªfbô
  == 0){
 
-1459 
+1467 
 èrgë_ödex
  = 
 ˛ock_h™d
 ;
 
-1462 if(
+1470 if(
 buf_mgr
 [
 ˛ock_h™d
@@ -5893,7 +5923,7 @@ buf_mgr
 is_dúty
  == 1){
 
-1464 
+1472 
 	`Êush_∑ge
 (
 èbÀ_id
@@ -5905,27 +5935,19 @@ buf_mgr
 ‰ame
 );
 
-1467 
-	`‰ì
+1475 
+	`mem£t
 (
 buf_mgr
 [
 ˛ock_h™d
 ].
 ‰ame
-);
+, 0, (
+Page
+));
 
-1468 
-buf_mgr
-[
-˛ock_h™d
-].
-‰ame
- = 
-NULL
-;
-
-1469 
+1476 
 buf_mgr
 [
 ˛ock_h™d
@@ -5933,7 +5955,7 @@ buf_mgr
 èbÀ_id
  = 0;
 
-1470 
+1477 
 buf_mgr
 [
 ˛ock_h™d
@@ -5941,29 +5963,13 @@ buf_mgr
 ∑ge_off£t
  = 0;
 
-1471 
+1478 
 buf_mgr
 [
 ˛ock_h™d
 ].
 is_dúty
  = 0;
-
-1472 
-buf_mgr
-[
-˛ock_h™d
-].
-ªfbô
- = 0;
-
-1478 if(
-buf_mgr
-[
-˛ock_h™d
-].
-ªfbô
- == 1){
 
 1479 
 buf_mgr
@@ -5973,21 +5979,37 @@ buf_mgr
 ªfbô
  = 0;
 
-1483 
+1485 if(
+buf_mgr
+[
+˛ock_h™d
+].
+ªfbô
+ == 1){
+
+1486 
+buf_mgr
+[
+˛ock_h™d
+].
+ªfbô
+ = 0;
+
+1490 
 ˛ock_h™d
  = (˛ock_h™d + 1Ë% 
 buf_size
 ;
 
-1487  
+1494  
 èrgë_ödex
 ;
 
-1488 
+1495 
 	}
 }
 
-1491 
+1498 
 	$Êush_∑ge_to_buf„r
 (
 èbÀ_id
@@ -5997,7 +6019,7 @@ Page
 ∑ge
 ){
 
-1492 
+1499 
 i
 , 
 buf_ödex
@@ -6005,15 +6027,7 @@ buf_ödex
 ödex
  = -1;
 
-1493 
-Page
- *
-ãmp
- = 
-NULL
-;
-
-1498 
+1504 
 ödex
  = 
 	`check_buf„r_f‹_Êush
@@ -6025,11 +6039,11 @@ NULL
 fûe_off£t
 );
 
-1501 if(
+1507 if(
 ödex
  != -1){
 
-1502 
+1508 
 	`mem˝y
 (
 buf_mgr
@@ -6043,7 +6057,7 @@ buf_mgr
 Page
 ));
 
-1503 
+1509 
 buf_mgr
 [
 èrgë_buf
@@ -6051,7 +6065,7 @@ buf_mgr
 is_dúty
  = 1;
 
-1508 
+1514 
 buf_ödex
  = 
 	`ª∂a˚_∑ge
@@ -6059,19 +6073,7 @@ buf_ödex
 èbÀ_id
 );
 
-1512 
-buf_mgr
-[
-buf_ödex
-].
-‰ame
- = (
-Page
-*)
-	`mÆloc
-((Page));
-
-1513 
+1518 
 	`mem˝y
 (
 buf_mgr
@@ -6085,7 +6087,7 @@ buf_ödex
 Page
 ));
 
-1514 
+1519 
 buf_mgr
 [
 buf_ödex
@@ -6093,7 +6095,7 @@ buf_ödex
 èbÀ_id
  =Åable_id;
 
-1515 
+1520 
 buf_mgr
 [
 buf_ödex
@@ -6105,7 +6107,7 @@ buf_ödex
 fûe_off£t
 ;
 
-1517 
+1522 
 buf_mgr
 [
 buf_ödex
@@ -6113,7 +6115,7 @@ buf_ödex
 is_dúty
  = 1;
 
-1518 
+1523 
 buf_mgr
 [
 buf_ödex
@@ -6121,7 +6123,7 @@ buf_ödex
 ªfbô
  = 1;
 
-1520 
+1525 
 	}
 }
 
@@ -6669,25 +6671,25 @@ PRIu64
 	`gëch¨
 () != ()'\n');
 
-46  
-EXIT_SUCCESS
-;
-
-55 
-	`gëch¨
-() != ()'\n');
-
-60 
+46 
 	`˛o£_èbÀ
 (
 èbÀ
 );
 
-62  
+47  
 EXIT_SUCCESS
 ;
 
-63 
+56 
+	`gëch¨
+() != ()'\n');
+
+61  
+EXIT_SUCCESS
+;
+
+62 
 	}
 }
 

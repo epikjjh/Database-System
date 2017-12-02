@@ -90,7 +90,7 @@
 // GLOBALS.
 extern HeaderPage dbheader[10];
 extern int dbfile[10];
-int table_ids[10] = {0,};
+static int table_ids[10] = {0,};
 
 /* The order determines the maximum and minimum
  * number of entries (keys and pointers) in any
@@ -1330,16 +1330,20 @@ int close_table(int table_id){
             if(buf_mgr[i].is_dirty == 1){
                 flush_page(table_id, buf_mgr[i].frame);
             }
-
-            // Memory free
-            free(buf_mgr[i].frame);
             // Reinitialize : Evict
-            memset(buf_mgr+i, 0, sizeof(Buffer));
+            memset(buf_mgr[i].frame, 0, sizeof(Page));
+            buf_mgr[i].table_id = 0;
+            buf_mgr[i].page_offset = 0;
+            buf_mgr[i].is_dirty = 0;
+            buf_mgr[i].refbit = 0;
         }
     }
 
     // Discard the table id.
     table_ids[table_id -1] = 0;
+    
+    // Close file
+    close_db(table_id);
 
     return 0;
 }
@@ -1516,4 +1520,73 @@ void flush_page_to_buffer(int table_id, Page *page){
         buf_mgr[buf_index].is_dirty = 1;
         buf_mgr[buf_index].refbit = 1;
     }
+}
+
+/* Project Join */
+// Return 0 if success, otherwise return -1
+// Premise : Given two tables are already open
+int join_table(int table_id_1, int table_id_2, char *pathname){
+    FILE *r_fp;
+    int num_1 = -1, num_2 = -1, max_1 = -1, max_2 = -1;
+
+    /* Open file where result table will be written */
+    if((r_fp = fopen(pathname, "wt")) == NULL){
+        return -1;
+    }
+
+    /* Examine information of each table */
+    table_info(table_id_1, &num_1, &max_1);
+    table_info(table_id_2, &num_2, &max_2);
+
+    ///test
+    printf("%d %d\n", num_1, max_1);
+    printf("%d %d\n", num_2, max_2);
+    ///
+}
+void table_info(int table_id, int *num_keys, int *max_key){
+    HeaderPage temp_header;
+    NodePage page;
+    LeafPage *temp_leaf;
+    off_t temp_sibling;
+
+    // Load header page.
+    load_page_from_buffer(table_id, 0, (Page*)(&temp_header));
+
+    /* Case : Empty table */
+    if(temp_header.root_offset == 0){
+        *num_keys = 0;
+        *max_key = 0;
+
+        return;
+    }
+    
+    // Load root page.
+    load_page_from_buffer(table_id, temp_header.root_offset, (Page*)&page);
+
+    // Search leaf page whcih has the smallest key.
+    while(!page.is_leaf){
+        InternalPage* internal_node = (InternalPage*)&page;
+        
+        load_page_from_buffer(table_id, INTERNAL_OFFSET(internal_node, 0), (Page*)&page);
+	}
+
+    /* Proceed until last leaf page using sibling.
+       Sum each leaf page's number of keys and find maximum key. */
+
+    // First, set initial condition.
+    temp_leaf = (LeafPage *)&page;
+
+    *num_keys = temp_leaf->num_keys;
+    *max_key = LEAF_KEY(temp_leaf, temp_leaf->num_keys - 1);
+    temp_sibling = temp_leaf->sibling;
+
+    while(temp_sibling != 0){
+        // Load sibling leaf page.
+        load_page_from_buffer(table_id, temp_sibling, (Page*)temp_leaf);
+        
+        *num_keys += temp_leaf->num_keys;
+        *max_key = LEAF_KEY(temp_leaf, temp_leaf->num_keys - 1);
+        temp_sibling = temp_leaf->sibling;
+    }
+
 }
