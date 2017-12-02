@@ -1528,7 +1528,7 @@ void flush_page_to_buffer(int table_id, Page *page){
 int join_table(int table_id_1, int table_id_2, char *pathname){
     FILE *r_fp;
     uint64_t num_1 = -1, num_2 = -1, min_1 = -1, min_2 = -1, max_1 = -1, max_2 = -1;
-    LeafPage *leaf_1, *leaf_2;
+    LeafPage leaf_1, leaf_2;
     off_t comp_sib_1, comp_sib_2;
     int comp_num_1, comp_num_2;
     uint64_t comp_key_1, comp_key_2;
@@ -1564,55 +1564,120 @@ int join_table(int table_id_1, int table_id_2, char *pathname){
     if(min_1 < min_2){
         // Table 1 : cut off
         // Table 2 : just load first leaf page
-        find_leaf(table_id_1, min_2, leaf_1);
-        find_leaf(table_id_2, min_2, leaf_2);
+        find_leaf(table_id_1, min_2, &leaf_1);
+        find_leaf(table_id_2, min_2, &leaf_2);
     }
     // Case : Cut off table 2
     else{
         // Table 1 : just load fisrt leaf page
         // Table 2 : cut off
-        find_leaf(table_id_1, min_1, leaf_1);
-        find_leaf(table_id_2, min_1, leaf_2);
+        find_leaf(table_id_1, min_1, &leaf_1);
+        find_leaf(table_id_2, min_1, &leaf_2);
     }
 
     // Initial condition
-
-    comp_sib_1 = leaf_1->sibling;
-    comp_sib_2 = leaf_2->sibling;
+    comp_sib_1 = leaf_1.sibling;
+    comp_sib_2 = leaf_2.sibling;
     comp_num_1 = 0;
     comp_num_2 = 0;
-    comp_key_1 = LEAF_KEY(leaf_1, comp_num_1);
-    comp_key_2 = LEAF_KEY(leaf_2, comp_num_2);
 
     /*
         Loop start : terminate condition
         -> Until rightmost sibling & last key ( Checking via number of keys)
     */
 
-    while((comp_sib_1 == 0 && com_num_1 == leaf_1->num_keys) || (comp_sib_2 == 0 && com_num_2 == leaf_2->num_keys)){
+    while((comp_sib_1 != 0 || comp_num_1 != leaf_1.num_keys) && (comp_sib_2 != 0 || comp_num_2 != leaf_2.num_keys)){
         /* Compare & produce result */
+        comp_key_1 = LEAF_KEY(&leaf_1, comp_num_1);
+        comp_key_2 = LEAF_KEY(&leaf_2, comp_num_2);
         
         // Compare
         while(comp_key_1 < comp_key_2){
-        
+            // Advance table 1
+            comp_num_1++;
+
+            // Case : Change table1's leaf page
+            if((comp_num_1 == leaf_1.num_keys) && (comp_sib_1 != 0)){
+                // Update leaf page
+                load_page_from_buffer(table_id_1, comp_sib_1, (Page*)&leaf_1);
+
+                // Update sibling offset
+                comp_sib_1 = leaf_1.sibling;
+
+                // Reinitialize
+                comp_num_1 = 0;
+            }
+
+            // Terminate comdition
+            if(comp_sib_1 == 0 && comp_num_1 ==  leaf_1.num_keys){
+                return 0;
+            }
+
+            // Update compare key
+            comp_key_1 = LEAF_KEY(&leaf_1, comp_num_1);
         }
         while(comp_key_1 > comp_key_2){
+            // Advance table 2
+            comp_num_2++;
+            
+            // Case : Change table2's leaf page
+            if((comp_num_2 == leaf_2.num_keys) && (comp_sib_2 != 0)){
+                // Update leaf page
+                load_page_from_buffer(table_id_2, comp_sib_2, (Page*)&leaf_2);
 
+                // Update sibling offset
+                comp_sib_2 = leaf_2.sibling;
+
+                // Reinitialize
+                comp_num_2 = 0;
+            }
+
+            // Terminate comdition
+            if(comp_sib_1 == 0 && comp_num_1 == leaf_1.num_keys){
+                return 0;
+            }
+
+            // Update compare key
+            comp_key_2 = LEAF_KEY(&leaf_2, comp_num_2);
         }
 
         /* Produce */
         // Notice that two tables are on unique key condition.
-        fprintf(r_fp, "%" PRIu64 ",%s," "%" PRIu64 ",%s\n", comp_key_1, LEAF_VALUE(leaf_1, comp_num_1), comp_key_2, LEAF_VALUE(leaf_2, comp_num_2));
+        fprintf(r_fp, "%" PRIu64 ",%s," "%" PRIu64 ",%s\n", comp_key_1, LEAF_VALUE(&leaf_1, comp_num_1), comp_key_2, LEAF_VALUE(&leaf_2, comp_num_2));
 
-        // Advance each key
-        
+        /* Advance each key */
+        // Update compare number
+        comp_num_1++;
+        comp_num_2++;
 
+        // Case : Change table1's leaf page
+        if((comp_num_1 == leaf_1.num_keys) && (comp_sib_1 != 0)){
+            // Update leaf page
+            load_page_from_buffer(table_id_1, comp_sib_1, (Page*)&leaf_1);
+
+            // Update sibling offset
+            comp_sib_1 = leaf_1.sibling;
+
+            // Reinitialize
+            comp_num_1 = 0;
+        }
+
+        // Case : Change table2's leaf page
+        if((comp_num_2 == leaf_2.num_keys) && (comp_sib_2 != 0)){
+            // Update leaf page
+            load_page_from_buffer(table_id_2, comp_sib_2, (Page*)&leaf_2);
+
+            // Update sibling offset
+            comp_sib_2 = leaf_2.sibling;
+
+            // Reinitialize
+            comp_num_2 = 0;
+        }
+
+        // Update compare key : Done in first part of loop
     }
 
-    /* Result writing format
-    uint64_t i = 1, j = 2;
-    fprintf(r_fp, "%" PRIu64 ",%s," "%" PRIu64 ",%s\n", i, "abcd", j, "asdf");
-    */
+    return 0;
 }
 void table_info(int table_id, uint64_t *num_keys, uint64_t *min_key, uint64_t *max_key){
     HeaderPage temp_header;
