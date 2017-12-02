@@ -20,7 +20,7 @@ int main( int argc, char ** argv ) {
 	//usage_1();  
 	//usage_2();
 
-    init_db(5);
+    init_db(1);
     table = open_table("test.db");
 	//printf("> ");
 	while (scanf("%c", &instruction) != EOF) {
@@ -43,6 +43,7 @@ int main( int argc, char ** argv ) {
 			break;
 		case 'q':
 			while (getchar() != (int)'\n');
+            close_table(table);
 			return EXIT_SUCCESS;
 			break;
 		case 't':
@@ -56,8 +57,6 @@ int main( int argc, char ** argv ) {
 		//printf("> ");
 	}
 	//printf("\n");
-
-    close_table(table);
 
 	return EXIT_SUCCESS;
 }

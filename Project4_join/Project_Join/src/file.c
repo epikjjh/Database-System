@@ -8,7 +8,7 @@
 #include "file.h"
 
 HeaderPage dbheader[10];
-int dbfile[10];
+int dbfile[10] = {0,};
 
 // Get free page to use.
 // If no more free page exist, expand file

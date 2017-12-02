@@ -9,83 +9,61 @@
 #include <string.h>
 #include <time.h>
 
-void input_table(int table_num, int num, const char *input_value);
-void check(int table_num, int size);
+void input_table(int table_num, uint64_t size, char *input_value);
+void check(int table_num, uint64_t size);
 
 // MAIN
 int main( int argc, char ** argv ) {
-	uint64_t input_key;
-    char input_value[SIZE_VALUE];
-	char instruction;
-    int table_1 = 0, table_2 = 0, size = 0;
+    char input_value_1[SIZE_VALUE], input_value_2[SIZE_VALUE];
+    uint64_t size_1, size_2;
+    int table_1 = 0, table_2 = 0;
 
-    init_db(5);
-    table_1 = open_table("table1.db");
-    table_2 = open_table("table2.db");
-    
     printf("Welcome to join test\n");
 
+    init_db(5);
+    
+    /* Prepare database : table 1 */
+    table_1 = open_table("table1.db");
+       
     printf("Input size and each value for table 1 : ");
-    scanf("%d %s", &size, input_value);
-    input_table(table_1, size, input_value);
-    /* Check */
-    check(table_1, size);
+    scanf("%" PRIu64 " %s", &size_1, input_value_1);
+    input_table(table_1, size_1, input_value_1);
+
+    close_table(table_1);
+
+    /* Prepare database : table 2 */
+
+    table_2 = open_table("table2.db");
 
     printf("Input size and each value for table 2 : ");
-    scanf("%d %s", &size, input_value);
-    input_table(table_2, size, input_value);
-    /* Check */
-    check(table_2, size);
+    scanf("%" PRIu64 " %s", &size_2, input_value_2);
+    input_table(table_2, size_2, input_value_2);
+
+    close_table(table_2);
+
+    /* Reopen two table and start join */
+    table_1 = open_table("table1.db");
+    table_2 = open_table("table2.db");
+
+    /* Join */
+    join_table(table_1, table_2, "result.txt");    
     
     close_table(table_1);
     close_table(table_2);
 
 	return EXIT_SUCCESS;
 }
-void input_table(int table_num, int size, const char *input_value){
-    int i;
+void input_table(int table_num, uint64_t size, char *input_value){
+    uint64_t i;
 
     for(i = 0; i < size; i++){
         insert(table_num, i, input_value);
     }
 }
-void check(int table_num, int size){
-    int i;
+void check(int table_num, uint64_t size){
+    uint64_t i;
 
     for(i = 0; i < size; i++){
 	    find_and_print(table_num, i);
     }
 }
-/*
-	while (scanf("%c", &instruction) != EOF) {
-		switch (instruction) {
-		case 'i':
-			scanf("%" PRIu64 " %s", &input_key, input_value);
-			insert(table, input_key, input_value);
-			//print_tree(table);
-			break;
-        case 'd':
-			scanf("%" PRIu64 "", &input_key);
-			delete(table, input_key);
-			//print_tree(table);
-			break;
-		case 'f':
-		//case 'p':
-			scanf("%" PRIu64 "", &input_key);
-			find_and_print(table, input_key);
-            fflush(stdout);
-			break;
-		case 'q':
-			while (getchar() != (int)'\n');
-			return EXIT_SUCCESS;
-			break;
-		case 't':
-			//print_tree(table);
-            break;
-        default:
-			//usage_2();
-			break;
-		}
-		while (getchar() != (int)'\n');
-	}
-*/
