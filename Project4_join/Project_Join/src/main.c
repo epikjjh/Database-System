@@ -17,6 +17,7 @@ int main( int argc, char ** argv ) {
     char input_value_1[SIZE_VALUE], input_value_2[SIZE_VALUE];
     uint64_t size_1, size_2;
     int table_1 = 0, table_2 = 0;
+    time_t start, end;
 
     printf("Welcome to join test\n");
 
@@ -46,10 +47,18 @@ int main( int argc, char ** argv ) {
     table_2 = open_table("table2.db");
 
     /* Join */
+    start = clock();
     join_table(table_1, table_2, "result.txt");    
-    
+    end = clock();
+
+    /* Print result time */
+    printf("Result time : %f\n", (float)(end - start)/(CLOCKS_PER_SEC));
     close_table(table_1);
     close_table(table_2);
+
+    /* Remove database file */
+    remove("table1.db");
+    remove("table2.db");
 
 	return EXIT_SUCCESS;
 }

@@ -1527,7 +1527,8 @@ void flush_page_to_buffer(int table_id, Page *page){
 // Premise : Given two tables are already open
 int join_table(int table_id_1, int table_id_2, char *pathname){
     FILE *r_fp;
-    int num_1 = -1, num_2 = -1, max_1 = -1, max_2 = -1;
+    uint64_t num_1 = -1, num_2 = -1, min_1 = -1, min_2 = -1, max_1 = -1, max_2 = -1;
+    LeafPage leaf_1, leaf_2;
 
     /* Open file where result table will be written */
     if((r_fp = fopen(pathname, "wt")) == NULL){
@@ -1535,15 +1536,54 @@ int join_table(int table_id_1, int table_id_2, char *pathname){
     }
 
     /* Examine information of each table */
-    table_info(table_id_1, &num_1, &max_1);
-    table_info(table_id_2, &num_2, &max_2);
+    table_info(table_id_1, &num_1, &min_1, &max_1);
+    table_info(table_id_2, &num_2, &min_2, &max_2);
 
-    ///test
-    printf("%d %d\n", num_1, max_1);
-    printf("%d %d\n", num_2, max_2);
-    ///
+    /* Use sort-merge join */
+
+    /* 
+        Exception check : if no common key, just return.
+        Checking via min - max range.
+    */
+    if(max_1 < min_2 || min_1 > max_2){
+        // Close file pointer
+        fclose(r_fp);
+
+        return 0;
+    }
+
+    /* 
+        Start condition : load initial leaf page of each table.
+        -> Use find_leaf function 
+    */
+
+    // Case : Cut off table 1
+    if(min_1 < min_2){
+        // Table 1 : cut off
+        // Table 2 : just load first leaf page
+        find_leaf(table_id_1, min_2, &leaf_1);
+        find_leaf(table_id_2, min_2, &leaf_2);
+    }
+    // Case : Cut off table 2
+    else{
+        // Table 1 : just load fisrt leaf page
+        // Table 2 : cut off
+        find_leaf(table_id_1, min_1, &leaf_1);
+        find_leaf(table_id_2, min_1, &leaf_2);
+    }
+
+    /*
+        Loop start : terminate condition
+    
+    */
+
+
+    /* Result writing format
+    uint64_t i = 1, j = 2;
+    fprintf(r_fp, "%" PRIu64 ",%s," "%" PRIu64 ",%s\n", i, "abcd", j, "asdf");
+    */
 }
-void table_info(int table_id, int *num_keys, int *max_key){
+void table_info(int table_id, uint64_t *num_keys, uint64_t *min_key, uint64_t *max_key){
     HeaderPage temp_header;
     NodePage page;
     LeafPage *temp_leaf;
@@ -1577,6 +1617,7 @@ void table_info(int table_id, int *num_keys, int *max_key){
     temp_leaf = (LeafPage *)&page;
 
     *num_keys = temp_leaf->num_keys;
+    *min_key = LEAF_KEY(temp_leaf, 0);
     *max_key = LEAF_KEY(temp_leaf, temp_leaf->num_keys - 1);
     temp_sibling = temp_leaf->sibling;
 
