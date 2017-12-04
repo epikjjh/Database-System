@@ -1454,7 +1454,7 @@ int check_buffer_for_flush(int table_id, off_t offset){
     return -1;
 }
 
-int replace_page(int table_id){
+int replace_page(){
     /* Used variable : clock_hand, buf_size */
     int target_index = -1;
 
@@ -1469,7 +1469,7 @@ int replace_page(int table_id){
             // Check dirty bit.
             if(buf_mgr[clock_hand].is_dirty == 1){
                 /* Flush page. */
-                flush_page(table_id, buf_mgr[clock_hand].frame);
+                flush_page(buf_mgr[clock_hand].table_id, buf_mgr[clock_hand].frame);
             }
             // Reinitialize : Evict
             memset(buf_mgr[clock_hand].frame, 0, sizeof(Page));
@@ -1511,7 +1511,7 @@ void flush_page_to_buffer(int table_id, Page *page){
     // Page is not in buffer
     else{
         // Ref bit is already turned on in is_in_buffer.
-        buf_index = replace_page(table_id);
+        buf_index = replace_page();
         // Setting new buffer // 
         // Page pointer is set already in replace_page function.
         // Memory allocation & Memory copy

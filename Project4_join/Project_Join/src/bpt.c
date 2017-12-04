@@ -1391,7 +1391,7 @@ void load_page_from_buffer(int table_id, off_t offset, Page* page){
     }
     // Page is not in buffer pool.
     else{
-        buf_index = replace_page(table_id);
+        buf_index = replace_page(NULL);
 
         // Load from disk.
         load_page(table_id, offset, page);
@@ -1452,7 +1452,7 @@ int check_buffer_for_flush(int table_id, off_t offset){
     return -1;
 }
 
-int replace_page(int table_id){
+int replace_page(FILE *file){
     /* Used variable : clock_hand, buf_size */
     int target_index = -1;
 
@@ -1464,10 +1464,24 @@ int replace_page(int table_id){
             // Setting target_index
             target_index = clock_hand;
 
+            // Output buffer
+            if(buf_mgr[clock_hand].table_id == -1){
+                int i;
+                OutputPage *target;
+
+                memcpy((Page *)target, buf_mgr[clock_hand].frame, sizeof(Page));
+
+                for(int i = 0; i < target->file_offset; i++){
+                    fprintf(file, "%" PRIu64 ",%s," "%" PRIu64 ",%s\n", RESULT_KEY1(target, i), RESULT_VALUE1(target, i), RESULT_KEY2(target, i), RESULT_VALUE2(target, i) );
+                }
+
+                buf_mgr[clock_hand].is_dirty = 0;
+            }
+            // Regular buffer
             // Check dirty bit.
             if(buf_mgr[clock_hand].is_dirty == 1){
                 /* Flush page. */
-                flush_page(table_id, buf_mgr[clock_hand].frame);
+                flush_page(buf_mgr[clock_hand].table_id, buf_mgr[clock_hand].frame);
             }
             // Reinitialize : Evict
             memset(buf_mgr[clock_hand].frame, 0, sizeof(Page));
@@ -1509,7 +1523,7 @@ void flush_page_to_buffer(int table_id, Page *page){
     // Page is not in buffer
     else{
         // Ref bit is already turned on in is_in_buffer.
-        buf_index = replace_page(table_id);
+        buf_index = replace_page(NULL);
         // Setting new buffer // 
         // Page pointer is set already in replace_page function.
         // Memory allocation & Memory copy
@@ -1610,6 +1624,8 @@ int join_table(int table_id_1, int table_id_2, char *pathname){
 
             // Terminate comdition
             if(comp_sib_1 == 0 && comp_num_1 ==  leaf_1.num_keys){
+                sync_buffer(r_fp);
+                fclose(r_fp);
                 return 0;
             }
 
@@ -1634,6 +1650,8 @@ int join_table(int table_id_1, int table_id_2, char *pathname){
 
             // Terminate comdition
             if(comp_sib_1 == 0 && comp_num_1 == leaf_1.num_keys){
+                sync_buffer(r_fp);
+                fclose(r_fp);
                 return 0;
             }
 
@@ -1643,7 +1661,7 @@ int join_table(int table_id_1, int table_id_2, char *pathname){
 
         /* Produce */
         // Notice that two tables are on unique key condition.
-        fprintf(r_fp, "%" PRIu64 ",%s," "%" PRIu64 ",%s\n", comp_key_1, LEAF_VALUE(&leaf_1, comp_num_1), comp_key_2, LEAF_VALUE(&leaf_2, comp_num_2));
+        write_output_buffer(r_fp, comp_key_1, LEAF_VALUE(&leaf_1, comp_num_1), comp_key_2, LEAF_VALUE(&leaf_2, comp_num_2));
 
         /* Advance each key */
         // Update compare number
@@ -1676,7 +1694,8 @@ int join_table(int table_id_1, int table_id_2, char *pathname){
 
         // Update compare key : Done in first part of loop
     }
-
+    sync_buffer(r_fp);
+    fclose(r_fp);
     return 0;
 }
 void table_info(int table_id, uint64_t *num_keys, uint64_t *min_key, uint64_t *max_key){
@@ -1726,4 +1745,110 @@ void table_info(int table_id, uint64_t *num_keys, uint64_t *min_key, uint64_t *m
         temp_sibling = temp_leaf->sibling;
     }
 
+}
+void write_output_buffer(FILE *file, uint64_t key1, char *value1, uint64_t key2, char *value2){
+    OutputPage output;
+
+    // Not in buffer
+    if(load_output_page((Page*)&output) == -1){
+        output.results[0].key1 = key1;
+        strcpy(output.results[0].value1, value1);
+        output.results[0].key2 = key2;
+        strcpy(output.results[0].value2, value2);
+        output.file_offset = 1;
+    }
+    // Is in buffer
+    else{
+        // Available output.
+        if(output.file_offset < OUTPUT_ORDER){
+            RESULT_KEY1(&output, output.file_offset) = key1;
+            strcpy(RESULT_VALUE1(&output, output.file_offset), value1);
+            RESULT_KEY2(&output, output.file_offset) = key2;
+            strcpy(RESULT_VALUE2(&output, output.file_offset), value2);
+
+            output.file_offset++;
+        }
+        // Full output.
+        else{
+            OutputPage new;
+
+            sync_buffer(file);
+
+            new.results[0].key1 = key1;
+            strcpy(new.results[0].value1, value1);
+            new.results[0].key2 = key2;
+            strcpy(new.results[0].value2, value2);
+            new.file_offset = 1;
+
+            flush_output_page(file, (Page *)&new);
+            return;
+        }
+    }
+
+    flush_output_page(file, (Page *)&output);
+}
+int load_output_page(Page *page){
+    Page *temp;
+
+    temp = check_buffer_for_load(-1, 0);
+
+    // Page is in buffer pool.
+    if(temp != NULL){
+        // Load page from buffer pool.
+        memcpy(page, temp, sizeof(Page));
+
+        /* Turn ref bit on */
+        // Previously done in is_in_buffer function
+        return 0;
+    }
+    // Page is not in buffer pool.
+    else{
+        return -1;
+    }
+}
+void flush_output_page(FILE *file, Page *page){
+    int i, buf_index = -1, index = -1;
+
+    // Check if target page is in buffer
+    // Decrease pin count : Done in is_in_buffer function.
+    // Dirty bit setting : Done in is_in_buffer function.
+    index = check_buffer_for_flush(-1, 0);
+
+    // Page is in buffer
+    if(index != -1){
+        memcpy(buf_mgr[target_buf].frame, page, sizeof(Page));
+        buf_mgr[target_buf].is_dirty = 1;
+    }
+    // Page is not in buffer
+    else{
+        // Ref bit is already turned on in is_in_buffer.
+        buf_index = replace_page(file);
+        // Setting new buffer // 
+        // Page pointer is set already in replace_page function.
+        // Memory allocation & Memory copy
+        memcpy(buf_mgr[buf_index].frame, page, sizeof(Page));
+        buf_mgr[buf_index].table_id = -1;
+        buf_mgr[buf_index].page_offset = 0;
+        // Setting dirty bit
+        buf_mgr[buf_index].is_dirty = 1;
+        buf_mgr[buf_index].refbit = 1;
+    }
+}
+void sync_buffer(FILE *file){
+    int i, index, end;
+    OutputPage target;
+
+    index = check_buffer_for_flush(-1, 0);
+
+    memcpy((Page *)&target, buf_mgr[index].frame, sizeof(Page));
+    for(int i = 0; i < target.file_offset; i++){
+        fprintf(file, "%" PRIu64 ",%s," "%" PRIu64 ",%s\n", RESULT_KEY1(&target, i), RESULT_VALUE1(&target, i), RESULT_KEY2(&target, i), RESULT_VALUE2(&target, i) );
+    }
+
+    // Reinitialize : Evict
+    memset(buf_mgr[index].frame, 0, sizeof(Page));
+    buf_mgr[index].table_id = 0;
+    buf_mgr[index].page_offset = 0;
+    buf_mgr[index].is_dirty = 0;
+    buf_mgr[index].refbit = 0;
 }

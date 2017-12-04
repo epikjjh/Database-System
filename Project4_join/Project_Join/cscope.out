@@ -1,4 +1,4 @@
-cscope 15 $HOME/mysql/Lab/Project4_join/Project_Join -q 0000000251 0000038967
+cscope 15 $HOME/mysql/Lab/Project4_join/Project_Join -q 0000000292 0000045968
 	@include/bpt.h
 
 1 #iâdeà
@@ -129,119 +129,119 @@ SIZE_VALUE
 
 	)
 
-25 
+15 
+	#OUTPUT_ORDER
+ 16
+
+	)
+
+27 
 	s_RecÜd
  {
 
-26 
+28 
 ušt64_t
  
 	mkey
 ;
 
-27 
+29 
 	mv®ue
 [
 SIZE_VALUE
 ];
 
-28 } 
+30 } 
 	tRecÜd
 ;
 
-30 
+32 
 	s_IÁ”ÇlRecÜd
  {
 
-31 
+33 
 ušt64_t
  
 	mkey
 ;
 
-32 
+34 
 off_t
  
 	moff£t
 ;
 
-33 } 
+35 } 
 	tIÁ”ÇlRecÜd
 ;
 
-35 
+38 
+	s_ResuÉ
+ {
+
+39 
+ušt64_t
+ 
+	mkey1
+;
+
+40 
+	mv®ue1
+[
+SIZE_VALUE
+];
+
+41 
+ušt64_t
+ 
+	mkey2
+;
+
+42 
+	mv®ue2
+[
+SIZE_VALUE
+];
+
+43 } 
+	tResuÉ
+;
+
+45 
 	s_Page
  {
 
-36 
+46 
 	mby‹s
 [
 PAGE_SIZE
 ];
 
-39 
+49 
 off_t
  
 	mfe_off£t
 ;
 
-40 } 
+50 } 
 	tPage
 ;
 
-42 
+52 
 	s_F»ePage
  {
 
-43 
+53 
 off_t
  
 	mÃxt
-;
-
-44 
-	m»£rved
-[
-PAGE_SIZE
- - 8];
-
-47 
-off_t
- 
-	mfe_off£t
-;
-
-48 } 
-	tF»ePage
-;
-
-50 
-	s_H—d”Page
- {
-
-51 
-off_t
- 
-	mä“li¡
-;
-
-52 
-off_t
- 
-	mroÙ_off£t
-;
-
-53 
-ušt64_t
- 
-	mnum_·ges
 ;
 
 54 
 	m»£rved
 [
 PAGE_SIZE
- - 24];
+ - 8];
 
 57 
 off_t
@@ -250,10 +250,48 @@ off_t
 ;
 
 58 } 
+	tF»ePage
+;
+
+60 
+	s_H—d”Page
+ {
+
+61 
+off_t
+ 
+	mä“li¡
+;
+
+62 
+off_t
+ 
+	mroÙ_off£t
+;
+
+63 
+ušt64_t
+ 
+	mnum_·ges
+;
+
+64 
+	m»£rved
+[
+PAGE_SIZE
+ - 24];
+
+67 
+off_t
+ 
+	mfe_off£t
+;
+
+68 } 
 	tH—d”Page
 ;
 
-60 
+70 
 	#INTERNAL_KEY
 (
 n
@@ -267,7 +305,7 @@ key
 
 	)
 
-61 
+71 
 	#INTERNAL_OFFSET
 (
 n
@@ -281,29 +319,29 @@ off£t
 
 	)
 
-62 
+72 
 	s_IÁ”ÇlPage
  {
 
-65 
+75 
 off_t
  
 	m·»Á
 ;
 
-66 
+76 
 	mis_Ëaf
 ;
 
-67 
+77 
 	mnum_keys
 ;
 
-68 
+78 
 	m»£rved
 [112 - 16];
 
-69 
+79 
 IÁ”ÇlRecÜd
  
 	mœecÜds
@@ -311,23 +349,23 @@ IÁ”ÇlRecÜd
 BPTREE_INTERNAL_ORDER
 ];
 
-71 
+81 
 	m¥aû
 [
 PAGE_SIZE
 ];
 
-74 
+84 
 off_t
  
 	mfe_off£t
 ;
 
-75 } 
+85 } 
 	tIÁ”ÇlPage
 ;
 
-77 
+87 
 	#LEAF_KEY
 (
 n
@@ -341,7 +379,7 @@ key
 
 	)
 
-78 
+88 
 	#LEAF_VALUE
 (
 n
@@ -355,35 +393,35 @@ v®ue
 
 	)
 
-79 
+89 
 	s_L—fPage
  {
 
-82 
+92 
 off_t
  
 	m·»Á
 ;
 
-83 
+93 
 	mis_Ëaf
 ;
 
-84 
+94 
 	mnum_keys
 ;
 
-85 
+95 
 	m»£rved
 [120 - 16];
 
-86 
+96 
 off_t
  
 	msiblšg
 ;
 
-87 
+97 
 RecÜd
  
 	m»cÜds
@@ -391,69 +429,153 @@ RecÜd
 BPTREE_LEAF_ORDER
 -1];
 
-89 
+99 
 	m¥aû
 [
 PAGE_SIZE
 ];
 
-93 
+103 
 off_t
  
 	mfe_off£t
 ;
 
-94 } 
+104 } 
 	tL—fPage
 ;
 
-96 
+106 
 	s_NodePage
  {
 
-99 
+109 
 off_t
  
 	m·»Á
 ;
 
-100 
+110 
 	mis_Ëaf
 ;
 
-101 
+111 
 	mnum_keys
 ;
 
-103 
+113 
 	m¥aû
 [
 PAGE_SIZE
 ];
 
-107 
+117 
 off_t
  
 	mfe_off£t
 ;
 
-108 } 
+118 } 
 	tNodePage
 ;
 
-111 
+121 
+	#RESULT_KEY1
+(
+n
+, 
+i
+è(Ò)->
+»suÉs
+[(i)].
+key1
+)
+
+	)
+
+122 
+	#RESULT_VALUE1
+(
+n
+, 
+i
+è(Ò)->
+»suÉs
+[(i)].
+v®ue1
+)
+
+	)
+
+123 
+	#RESULT_KEY2
+(
+n
+, 
+i
+è(Ò)->
+»suÉs
+[(i)].
+key2
+)
+
+	)
+
+124 
+	#RESULT_VALUE2
+(
+n
+, 
+i
+è(Ò)->
+»suÉs
+[(i)].
+v®ue2
+)
+
+	)
+
+125 
+	s_OuutPage
+ {
+
+127 
+ResuÉ
+ 
+	m»suÉs
+[
+OUTPUT_ORDER
+];
+
+128 
+	m¥aû
+[
+PAGE_SIZE
+];
+
+131 
+off_t
+ 
+	mšdex
+;
+
+132 } 
+	tOuutPage
+;
+
+135 
 İ’_bË
 (cÚ¡ * 
 f’ame
 );
 
-115 
+139 
 şo£_db
 (
 bË_id
 );
 
-118 
+142 
 off_t
  
 g‘_ä“_·ge
@@ -461,7 +583,7 @@ g‘_ä“_·ge
 bË_id
 );
 
-121 
+145 
 put_ä“_·ge
 (
 bË_id
@@ -471,7 +593,7 @@ off_t
 ·ge_off£t
 );
 
-124 
+148 
 ex·nd_fe
 (
 bË_id
@@ -481,7 +603,7 @@ size_t
 út_·ge_to_ex·nd
 );
 
-127 
+151 
 lßd_·ge
 (
 bË_id
@@ -495,7 +617,7 @@ Page
 ·ge
 );
 
-130 
+154 
 æush_·ge
 (
 bË_id
@@ -505,45 +627,45 @@ Page
 ·ge
 );
 
-132 
+156 
 H—d”Page
  
 dbh—d”
 [10];
 
-136 
+160 
 	s_Bufãr
 {
 
-137 
+161 
 Page
  *
 	mäame
 ;
 
-138 
+162 
 	mbË_id
 ;
 
-139 
+163 
 off_t
  
 	m·ge_off£t
 ;
 
-140 
+164 
 	mis_dœty
 ;
 
-142 
+166 
 	m»fb™
 ;
 
-143 } 
+167 } 
 	tBufãr
 ;
 
-146 
+170 
 lßd_·ge_äom_bufãr
 (
 bË_id
@@ -557,7 +679,7 @@ Page
 ·ge
 );
 
-149 
+173 
 Page
 * 
 check_bufãr_fÜ_lßd
@@ -569,7 +691,7 @@ off_t
 off£t
 );
 
-152 
+176 
 check_bufãr_fÜ_æush
 (
 bË_id
@@ -579,13 +701,15 @@ off_t
 off£t
 );
 
-155 
+178 
 »¶aû_·ge
-(
-bË_id
+(
+FILE
+ *
+fe
 );
 
-158 
+181 
 æush_·ge_to_bufãr
 (
 bË_id
@@ -595,7 +719,7 @@ Page
 ·ge
 );
 
-162 
+184 
 još_bË
 (
 bË_id_1
@@ -605,14 +729,64 @@ još_bË
 ·thÇme
 );
 
-164 
+186 
 bË_šfo
 (
 bË_id
-, *
+, 
+ušt64_t
+ *
 num_keys
-, *
+, ušt64_ˆ*
+mš_key
+, ušt64_ˆ*
 max_key
+);
+
+188 
+wr™e_ouut_bufãr
+(
+FILE
+ *
+fe
+, 
+ušt64_t
+ 
+key1
+, *
+v®ue1
+, ušt64_ˆ
+key2
+, *
+v®ue2
+);
+
+190 
+lßd_ouut_·ge
+(
+Page
+ *
+·ge
+);
+
+192 
+æush_ouut_·ge
+(
+FILE
+ *
+fe
+, 
+Page
+ *
+·ge
+);
+
+194 
+sync_bufãr
+(
+FILE
+ *
+fe
 );
 
 	@src/bpt.c
@@ -5704,7 +5878,7 @@ buf_šdex
  = 
 	`»¶aû_·ge
 (
-bË_id
+NULL
 );
 
 1397 
@@ -5909,8 +6083,10 @@ buf_size
 
 1455 
 	$»¶aû_·ge
-(
-bË_id
+(
+FILE
+ *
+fe
 ){
 
 1457 
@@ -5940,22 +6116,90 @@ buf_mgr
 [
 şock_hªd
 ].
-is_dœty
- == 1){
+bË_id
+ == -1){
+
+1469 
+i
+;
 
 1470 
-	`æush_·ge
-(
-bË_id
+OuutPage
+ *
+rg‘
+;
+
+1472 
+	`memıy
+((
+Page
+ *)
+rg‘
 , 
 buf_mgr
 [
 şock_hªd
 ].
 äame
+, (Page));
+
+1474 
+i
+ = 0; i < 
+rg‘
+->
+šdex
+; i++){
+
+1475 
+	`årštf
+(
+fe
+, "%" 
+PRIu64
+ ",%s," "%" PRIu64 ",%s\n", 
+	`RESULT_KEY1
+(
+rg‘
+, 
+i
+), 
+	`RESULT_VALUE1
+Ñ¬g‘, i), 
+	`RESULT_KEY2
+Ñ¬g‘, i), 
+	`RESULT_VALUE2
+(target, i) );
+
+1478 
+buf_mgr
+[
+şock_hªd
+].
+is_dœty
+ = 0;
+
+1482 if(
+buf_mgr
+[
+şock_hªd
+].
+is_dœty
+ == 1){
+
+1484 
+	`æush_·ge
+(
+buf_mgr
+[
+şock_hªd
+].
+bË_id
+, buf_mgr[şock_hªd].
+äame
 );
 
-1473 
+1487 
 	`mem£t
 (
 buf_mgr
@@ -5967,7 +6211,7 @@ buf_mgr
 Page
 ));
 
-1474 
+1488 
 buf_mgr
 [
 şock_hªd
@@ -5975,7 +6219,7 @@ buf_mgr
 bË_id
  = 0;
 
-1475 
+1489 
 buf_mgr
 [
 şock_hªd
@@ -5983,7 +6227,7 @@ buf_mgr
 ·ge_off£t
  = 0;
 
-1476 
+1490 
 buf_mgr
 [
 şock_hªd
@@ -5991,7 +6235,7 @@ buf_mgr
 is_dœty
  = 0;
 
-1477 
+1491 
 buf_mgr
 [
 şock_hªd
@@ -5999,7 +6243,7 @@ buf_mgr
 »fb™
  = 0;
 
-1483 if(
+1497 if(
 buf_mgr
 [
 şock_hªd
@@ -6007,7 +6251,7 @@ buf_mgr
 »fb™
  == 1){
 
-1484 
+1498 
 buf_mgr
 [
 şock_hªd
@@ -6015,21 +6259,21 @@ buf_mgr
 »fb™
  = 0;
 
-1488 
+1502 
 şock_hªd
  = (şock_hªd + 1è% 
 buf_size
 ;
 
-1492  
+1506  
 rg‘_šdex
 ;
 
-1493 
+1507 
 	}
 }
 
-1496 
+1510 
 	$æush_·ge_to_bufãr
 (
 bË_id
@@ -6039,7 +6283,7 @@ Page
 ·ge
 ){
 
-1497 
+1511 
 i
 , 
 buf_šdex
@@ -6047,7 +6291,7 @@ buf_šdex
 šdex
  = -1;
 
-1502 
+1516 
 šdex
  = 
 	`check_bufãr_fÜ_æush
@@ -6059,11 +6303,11 @@ buf_šdex
 fe_off£t
 );
 
-1505 if(
+1519 if(
 šdex
  != -1){
 
-1506 
+1520 
 	`memıy
 (
 buf_mgr
@@ -6077,7 +6321,7 @@ buf_mgr
 Page
 ));
 
-1507 
+1521 
 buf_mgr
 [
 rg‘_buf
@@ -6085,15 +6329,15 @@ buf_mgr
 is_dœty
  = 1;
 
-1512 
+1526 
 buf_šdex
  = 
 	`»¶aû_·ge
 (
-bË_id
+NULL
 );
 
-1516 
+1530 
 	`memıy
 (
 buf_mgr
@@ -6107,7 +6351,7 @@ buf_šdex
 Page
 ));
 
-1517 
+1531 
 buf_mgr
 [
 buf_šdex
@@ -6115,7 +6359,7 @@ buf_šdex
 bË_id
  =able_id;
 
-1518 
+1532 
 buf_mgr
 [
 buf_šdex
@@ -6127,7 +6371,7 @@ buf_šdex
 fe_off£t
 ;
 
-1520 
+1534 
 buf_mgr
 [
 buf_šdex
@@ -6135,7 +6379,7 @@ buf_šdex
 is_dœty
  = 1;
 
-1521 
+1535 
 buf_mgr
 [
 buf_šdex
@@ -6143,11 +6387,11 @@ buf_šdex
 »fb™
  = 1;
 
-1523 
+1537 
 	}
 }
 
-1528 
+1542 
 	$još_bË
 (
 bË_id_1
@@ -6157,23 +6401,59 @@ buf_šdex
 ·thÇme
 ){
 
-1529 
+1543 
 FILE
  *
 r_å
 ;
 
-1530 
+1544 
+ušt64_t
+ 
 num_1
  = -1, 
 num_2
+ = -1, 
+mš_1
+ = -1, 
+mš_2
  = -1, 
 max_1
  = -1, 
 max_2
  = -1;
 
-1533 if((
+1545 
+L—fPage
+ 
+Ëaf_1
+, 
+Ëaf_2
+;
+
+1546 
+off_t
+ 
+comp_sib_1
+, 
+comp_sib_2
+;
+
+1547 
+comp_num_1
+, 
+comp_num_2
+;
+
+1548 
+ušt64_t
+ 
+comp_key_1
+, 
+comp_key_2
+;
+
+1551 if((
 r_å
  = 
 	`fİ’
@@ -6183,81 +6463,455 @@ r_å
 NULL
 ){
 
-1538 
+1556 
 	`bË_šfo
 (
 bË_id_1
 , &
 num_1
 , &
+mš_1
+, &
 max_1
 );
 
-1539 
+1557 
 	`bË_šfo
 (
 bË_id_2
 , &
 num_2
 , &
+mš_2
+, &
 max_2
 );
 
-1542 
-	`´štf
-("%d %d\n", 
-num_1
-, 
+1565 if(
 max_1
-);
-
-1543 
-	`´štf
-("%d %d\n", 
-num_2
-, 
+ < 
+mš_2
+ || 
+mš_1
+ > 
 max_2
+){
+
+1567 
+	`fşo£
+(
+r_å
 );
 
-1545 
+1578 if(
+mš_1
+ < 
+mš_2
+){
+
+1581 
+	`fšd_Ëaf
+(
+bË_id_1
+, 
+mš_2
+, &
+Ëaf_1
+);
+
+1582 
+	`fšd_Ëaf
+(
+bË_id_2
+, 
+mš_2
+, &
+Ëaf_2
+);
+
+1588 
+	`fšd_Ëaf
+(
+bË_id_1
+, 
+mš_1
+, &
+Ëaf_1
+);
+
+1589 
+	`fšd_Ëaf
+(
+bË_id_2
+, 
+mš_1
+, &
+Ëaf_2
+);
+
+1593 
+comp_sib_1
+ = 
+Ëaf_1
+.
+siblšg
+;
+
+1594 
+comp_sib_2
+ = 
+Ëaf_2
+.
+siblšg
+;
+
+1595 
+comp_num_1
+ = 0;
+
+1596 
+comp_num_2
+ = 0;
+
+1603 (
+comp_sib_1
+ !ğ0 || 
+comp_num_1
+ !ğ
+Ëaf_1
+.
+num_keys
+è&& (
+comp_sib_2
+ !ğ0 || 
+comp_num_2
+ !ğ
+Ëaf_2
+.num_keys)){
+
+1605 
+comp_key_1
+ = 
+	`LEAF_KEY
+(&
+Ëaf_1
+, 
+comp_num_1
+);
+
+1606 
+comp_key_2
+ = 
+	`LEAF_KEY
+(&
+Ëaf_2
+, 
+comp_num_2
+);
+
+1609 
+comp_key_1
+ < 
+comp_key_2
+){
+
+1611 
+comp_num_1
+++;
+
+1614 if((
+comp_num_1
+ =ğ
+Ëaf_1
+.
+num_keys
+è&& (
+comp_sib_1
+ != 0)){
+
+1616 
+	`lßd_·ge_äom_bufãr
+(
+bË_id_1
+, 
+comp_sib_1
+, (
+Page
+*)&
+Ëaf_1
+);
+
+1619 
+comp_sib_1
+ = 
+Ëaf_1
+.
+siblšg
+;
+
+1622 
+comp_num_1
+ = 0;
+
+1626 if(
+comp_sib_1
+ =ğ0 && 
+comp_num_1
+ =ğ
+Ëaf_1
+.
+num_keys
+){
+
+1627 
+	`sync_bufãr
+(
+r_å
+);
+
+1628 
+	`fşo£
+(
+r_å
+);
+
+1633 
+comp_key_1
+ = 
+	`LEAF_KEY
+(&
+Ëaf_1
+, 
+comp_num_1
+);
+
+1635 
+comp_key_1
+ > 
+comp_key_2
+){
+
+1637 
+comp_num_2
+++;
+
+1640 if((
+comp_num_2
+ =ğ
+Ëaf_2
+.
+num_keys
+è&& (
+comp_sib_2
+ != 0)){
+
+1642 
+	`lßd_·ge_äom_bufãr
+(
+bË_id_2
+, 
+comp_sib_2
+, (
+Page
+*)&
+Ëaf_2
+);
+
+1645 
+comp_sib_2
+ = 
+Ëaf_2
+.
+siblšg
+;
+
+1648 
+comp_num_2
+ = 0;
+
+1652 if(
+comp_sib_1
+ =ğ0 && 
+comp_num_1
+ =ğ
+Ëaf_1
+.
+num_keys
+){
+
+1653 
+	`sync_bufãr
+(
+r_å
+);
+
+1654 
+	`fşo£
+(
+r_å
+);
+
+1659 
+comp_key_2
+ = 
+	`LEAF_KEY
+(&
+Ëaf_2
+, 
+comp_num_2
+);
+
+1664 
+	`wr™e_ouut_bufãr
+(
+r_å
+, 
+comp_key_1
+, 
+	`LEAF_VALUE
+(&
+Ëaf_1
+, 
+comp_num_1
+), 
+comp_key_2
+, LEAF_VALUE(&
+Ëaf_2
+, 
+comp_num_2
+));
+
+1668 
+comp_num_1
+++;
+
+1669 
+comp_num_2
+++;
+
+1672 if((
+comp_num_1
+ =ğ
+Ëaf_1
+.
+num_keys
+è&& (
+comp_sib_1
+ != 0)){
+
+1674 
+	`lßd_·ge_äom_bufãr
+(
+bË_id_1
+, 
+comp_sib_1
+, (
+Page
+*)&
+Ëaf_1
+);
+
+1677 
+comp_sib_1
+ = 
+Ëaf_1
+.
+siblšg
+;
+
+1680 
+comp_num_1
+ = 0;
+
+1684 if((
+comp_num_2
+ =ğ
+Ëaf_2
+.
+num_keys
+è&& (
+comp_sib_2
+ != 0)){
+
+1686 
+	`lßd_·ge_äom_bufãr
+(
+bË_id_2
+, 
+comp_sib_2
+, (
+Page
+*)&
+Ëaf_2
+);
+
+1689 
+comp_sib_2
+ = 
+Ëaf_2
+.
+siblšg
+;
+
+1692 
+comp_num_2
+ = 0;
+
+1697 
+	`sync_bufãr
+(
+r_å
+);
+
+1698 
+	`fşo£
+(
+r_å
+);
+
+1700 
 	}
 }
 
-1546 
+1701 
 	$bË_šfo
 (
 bË_id
-, *
+, 
+ušt64_t
+ *
 num_keys
-, *
+, ušt64_ˆ*
+mš_key
+, ušt64_ˆ*
 max_key
 ){
 
-1547 
+1702 
 H—d”Page
  
 ‹mp_h—d”
 ;
 
-1548 
+1703 
 NodePage
  
 ·ge
 ;
 
-1549 
+1704 
 L—fPage
  *
 ‹mp_Ëaf
 ;
 
-1550 
+1705 
 off_t
  
 ‹mp_siblšg
 ;
 
-1553 
+1708 
 	`lßd_·ge_äom_bufãr
 (
 bË_id
@@ -6267,21 +6921,21 @@ Page
 ‹mp_h—d”
 ));
 
-1556 if(
+1711 if(
 ‹mp_h—d”
 .
 roÙ_off£t
  == 0){
 
-1557 *
+1712 *
 num_keys
  = 0;
 
-1558 *
+1713 *
 max_key
  = 0;
 
-1564 
+1719 
 	`lßd_·ge_äom_bufãr
 (
 bË_id
@@ -6295,13 +6949,13 @@ Page
 ·ge
 );
 
-1567 !
+1722 !
 ·ge
 .
 is_Ëaf
 ){
 
-1568 
+1723 
 IÁ”ÇlPage
 * 
 š‹º®_node
@@ -6309,7 +6963,7 @@ IÁ”ÇlPage
 ·ge
 ;
 
-1570 
+1725 
 	`lßd_·ge_äom_bufãr
 (
 bË_id
@@ -6323,7 +6977,7 @@ Page
 ·ge
 );
 
-1577 
+1732 
 ‹mp_Ëaf
  = (
 L—fPage
@@ -6331,13 +6985,21 @@ L—fPage
 ·ge
 ;
 
-1579 *
+1734 *
 num_keys
  = 
 ‹mp_Ëaf
 ->num_keys;
 
-1580 *
+1735 *
+mš_key
+ = 
+	`LEAF_KEY
+(
+‹mp_Ëaf
+, 0);
+
+1736 *
 max_key
  = 
 	`LEAF_KEY
@@ -6347,7 +7009,7 @@ max_key
 num_keys
  - 1);
 
-1581 
+1737 
 ‹mp_siblšg
  = 
 ‹mp_Ëaf
@@ -6355,11 +7017,11 @@ num_keys
 siblšg
 ;
 
-1583 
+1739 
 ‹mp_siblšg
  != 0){
 
-1585 
+1741 
 	`lßd_·ge_äom_bufãr
 (
 bË_id
@@ -6371,13 +7033,13 @@ Page
 ‹mp_Ëaf
 );
 
-1587 *
+1743 *
 num_keys
  +ğ
 ‹mp_Ëaf
 ->num_keys;
 
-1588 *
+1744 *
 max_key
  = 
 	`LEAF_KEY
@@ -6387,7 +7049,7 @@ max_key
 num_keys
  - 1);
 
-1589 
+1745 
 ‹mp_siblšg
  = 
 ‹mp_Ëaf
@@ -6395,7 +7057,485 @@ num_keys
 siblšg
 ;
 
-1592 
+1748 
+	}
+}
+
+1749 
+	$wr™e_ouut_bufãr
+(
+FILE
+ *
+fe
+, 
+ušt64_t
+ 
+key1
+, *
+v®ue1
+, ušt64_ˆ
+key2
+, *
+v®ue2
+){
+
+1750 
+OuutPage
+ 
+ouut
+;
+
+1753 if(
+	`lßd_ouut_·ge
+((
+Page
+*)&
+ouut
+) == -1){
+
+1754 
+ouut
+.
+»suÉs
+[0].
+key1
+ = key1;
+
+1755 
+	`¡rıy
+(
+ouut
+.
+»suÉs
+[0].
+v®ue1
+, value1);
+
+1756 
+ouut
+.
+»suÉs
+[0].
+key2
+ = key2;
+
+1757 
+	`¡rıy
+(
+ouut
+.
+»suÉs
+[0].
+v®ue2
+, value2);
+
+1758 
+ouut
+.
+šdex
+ = 1;
+
+1763 if(
+ouut
+.
+šdex
+ < 
+OUTPUT_ORDER
+){
+
+1764 
+	`RESULT_KEY1
+(&
+ouut
+, ouut.
+šdex
+èğ
+key1
+;
+
+1765 
+	`¡rıy
+(
+	`RESULT_VALUE1
+(&
+ouut
+, ouut.
+šdex
+), 
+v®ue1
+);
+
+1766 
+	`RESULT_KEY2
+(&
+ouut
+, ouut.
+šdex
+èğ
+key2
+;
+
+1767 
+	`¡rıy
+(
+	`RESULT_VALUE2
+(&
+ouut
+, ouut.
+šdex
+), 
+v®ue2
+);
+
+1769 
+ouut
+.
+šdex
+++;
+
+1773 
+OuutPage
+ 
+Ãw
+;
+
+1775 
+	`sync_bufãr
+(
+fe
+);
+
+1777 
+Ãw
+.
+»suÉs
+[0].
+key1
+ = key1;
+
+1778 
+	`¡rıy
+(
+Ãw
+.
+»suÉs
+[0].
+v®ue1
+, value1);
+
+1779 
+Ãw
+.
+»suÉs
+[0].
+key2
+ = key2;
+
+1780 
+	`¡rıy
+(
+Ãw
+.
+»suÉs
+[0].
+v®ue2
+, value2);
+
+1781 
+Ãw
+.
+šdex
+ = 1;
+
+1783 
+	`æush_ouut_·ge
+(
+fe
+, (
+Page
+ *)&
+Ãw
+);
+
+1788 
+	`æush_ouut_·ge
+(
+fe
+, (
+Page
+ *)&
+ouut
+);
+
+1789 
+	}
+}
+
+1790 
+	$lßd_ouut_·ge
+(
+Page
+ *
+·ge
+){
+
+1791 
+Page
+ *
+‹mp
+;
+
+1793 
+‹mp
+ = 
+	`check_bufãr_fÜ_lßd
+(-1, 0);
+
+1796 if(
+‹mp
+ !ğ
+NULL
+){
+
+1798 
+	`memıy
+(
+·ge
+, 
+‹mp
+, (
+Page
+));
+
+1808 
+	}
+}
+
+1809 
+	$æush_ouut_·ge
+(
+FILE
+ *
+fe
+, 
+Page
+ *
+·ge
+){
+
+1810 
+i
+, 
+buf_šdex
+ = -1, 
+šdex
+ = -1;
+
+1815 
+šdex
+ = 
+	`check_bufãr_fÜ_æush
+(-1, 0);
+
+1818 if(
+šdex
+ != -1){
+
+1819 
+	`memıy
+(
+buf_mgr
+[
+rg‘_buf
+].
+äame
+, 
+·ge
+, (
+Page
+));
+
+1820 
+buf_mgr
+[
+rg‘_buf
+].
+is_dœty
+ = 1;
+
+1825 
+buf_šdex
+ = 
+	`»¶aû_·ge
+(
+fe
+);
+
+1829 
+	`memıy
+(
+buf_mgr
+[
+buf_šdex
+].
+äame
+, 
+·ge
+, (
+Page
+));
+
+1830 
+buf_mgr
+[
+buf_šdex
+].
+bË_id
+ = -1;
+
+1831 
+buf_mgr
+[
+buf_šdex
+].
+·ge_off£t
+ = 0;
+
+1833 
+buf_mgr
+[
+buf_šdex
+].
+is_dœty
+ = 1;
+
+1834 
+buf_mgr
+[
+buf_šdex
+].
+»fb™
+ = 1;
+
+1836 
+	}
+}
+
+1837 
+	$sync_bufãr
+(
+FILE
+ *
+fe
+){
+
+1838 
+i
+, 
+šdex
+, 
+’d
+;
+
+1839 
+OuutPage
+ *
+rg‘
+;
+
+1841 
+šdex
+ = 
+	`check_bufãr_fÜ_æush
+(-1, 0);
+
+1843 
+	`memıy
+((
+Page
+ *)
+rg‘
+, 
+buf_mgr
+[
+šdex
+].
+äame
+, (Page));
+
+1844 
+i
+ = 0; i < 
+rg‘
+->
+šdex
+; i++){
+
+1845 
+	`årštf
+(
+fe
+, "%" 
+PRIu64
+ ",%s," "%" PRIu64 ",%s\n", 
+	`RESULT_KEY1
+(
+rg‘
+, 
+i
+), 
+	`RESULT_VALUE1
+Ñ¬g‘, i), 
+	`RESULT_KEY2
+Ñ¬g‘, i), 
+	`RESULT_VALUE2
+(target, i) );
+
+1849 
+	`mem£t
+(
+buf_mgr
+[
+šdex
+].
+äame
+, 0, (
+Page
+));
+
+1850 
+buf_mgr
+[
+šdex
+].
+bË_id
+ = 0;
+
+1851 
+buf_mgr
+[
+šdex
+].
+·ge_off£t
+ = 0;
+
+1852 
+buf_mgr
+[
+šdex
+].
+is_dœty
+ = 0;
+
+1853 
+buf_mgr
+[
+šdex
+].
+»fb™
+ = 0;
+
+1854 
 	}
 }
 
@@ -6835,9 +7975,15 @@ PAGE_SIZE
 šput_bË
 (
 bË_num
-, 
-num
-, cÚ¡ *
+, 
+ušt64_t
+ 
+¡¬t
+, ušt64_ˆ
+’d
+, ušt64_ˆ
+jump
+, *
 šput_v®ue
 );
 
@@ -6845,7 +7991,9 @@ num
 check
 (
 bË_num
-, 
+, 
+ušt64_t
+ 
 size
 );
 
@@ -6857,75 +8005,153 @@ size
 ¬gv
  ) {
 
-17 
-ušt64_t
- 
-šput_key
-;
-
-18 
-šput_v®ue
+17 
+šput_v®ue_1
 [
 SIZE_VALUE
-];
+], 
+šput_v®ue_2
+[SIZE_VALUE];
 
-19 
-š¡ruùiÚ
+18 
+ušt64_t
+ 
+¡¬t
+, 
+’d
+, 
+jump
 ;
 
-20 
+19 
 bË_1
  = 0, 
 bË_2
- = 0, 
-size
  = 0;
 
+20 
+time_t
+ 
+¡¬t_t
+, 
+’d_t
+;
+
 22 
-	`š™_db
-(1);
+	`´štf
+("Welcomeo joinest\n");
 
 24 
+	`š™_db
+(5);
+
+27 
 bË_1
  = 
 	`İ’_bË
 ("table1.db");
 
-27 
+29 
 	`´štf
-("Welcomeo joinest\n");
+("Start / End / Jump / Each value forable 1 : ");
 
 30 
-	`´štf
-("Input size‡ndƒach value forable 1 : ");
-
-31 
 	`sÿnf
-("%d %s", &
-size
+("%" 
+PRIu64
+ " %" PRIu64 " %" PRIu64 " %s", &
+¡¬t
+, &
+’d
+, &
+jump
 , 
-šput_v®ue
+šput_v®ue_1
 );
 
-32 
+31 
 	`šput_bË
 (
 bË_1
 , 
-size
+¡¬t
 , 
-šput_v®ue
+’d
+, 
+jump
+, 
+šput_v®ue_1
 );
 
-40 
-	`check
+33 
+	`şo£_bË
 (
 bË_1
-, 
-size
 );
 
-45 
+37 
+bË_2
+ = 
+	`İ’_bË
+("table2.db");
+
+39 
+	`´štf
+("Start / End / Jump / Each value forable 2 : ");
+
+40 
+	`sÿnf
+("%" 
+PRIu64
+ " %" PRIu64 " %" PRIu64 " %s", &
+¡¬t
+, &
+’d
+, &
+jump
+, 
+šput_v®ue_2
+);
+
+41 
+	`šput_bË
+(
+bË_2
+, 
+¡¬t
+, 
+’d
+, 
+jump
+, 
+šput_v®ue_2
+);
+
+43 
+	`şo£_bË
+(
+bË_2
+);
+
+46 
+bË_1
+ = 
+	`İ’_bË
+("table1.db");
+
+47 
+bË_2
+ = 
+	`İ’_bË
+("table2.db");
+
+50 
+¡¬t_t
+ = 
+	`şock
+();
+
+51 
 	`još_bË
 (
 bË_1
@@ -6933,41 +8159,95 @@ size
 bË_2
 , "result.txt");
 
-47 
+52 
+’d_t
+ = 
+	`şock
+();
+
+55 
+	`´štf
+("ResuÉim: %f\n", ()(
+’d
+ - 
+¡¬t
+)/(
+CLOCKS_PER_SEC
+));
+
+56 
 	`şo£_bË
 (
 bË_1
 );
 
-50  
+57 
+	`şo£_bË
+(
+bË_2
+);
+
+60 
+	`»move
+("table1.db");
+
+61 
+	`»move
+("table2.db");
+
+63  
 EXIT_SUCCESS
 ;
 
-51 
+64 
 	}
 }
 
-52 
+65 
 	$šput_bË
 (
 bË_num
-, 
-size
-, cÚ¡ *
+, 
+ušt64_t
+ 
+¡¬t
+, ušt64_ˆ
+’d
+, ušt64_ˆ
+jump
+, *
 šput_v®ue
 ){
 
-53 
+66 
+ušt64_t
+ 
 i
 ;
 
-55 
-i
- = 0; i < 
-size
-; i++){
+68 if(
+jump
+ < 0 || 
+¡¬t
+ > 
+’d
+){
 
-56 
+69 
+	`´štf
+("Fail!\n");
+
+74 
+i
+ = 
+¡¬t
+; i <ğ
+’d
+; i +ğ
+jump
+){
+
+75 
 	`š£¹
 (
 bË_num
@@ -6977,29 +8257,41 @@ i
 šput_v®ue
 );
 
-58 
+76 if(
+jump
+ == 0){
+
+77 
+i
+++;
+
+80 
 	}
 }
 
-59 
+81 
 	$check
 (
 bË_num
-, 
+, 
+ušt64_t
+ 
 size
 ){
 
-60 
+82 
+ušt64_t
+ 
 i
 ;
 
-62 
+84 
 i
  = 0; i < 
 size
 ; i++){
 
-63 
+85 
 	`fšd_ªd_´št
 (
 bË_num
@@ -7007,7 +8299,7 @@ size
 i
 );
 
-65 
+87 
 	}
 }
 

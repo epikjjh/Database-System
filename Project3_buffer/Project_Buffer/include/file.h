@@ -152,7 +152,7 @@ Page* check_buffer_for_load(int table_id, off_t offset);
 int check_buffer_for_flush(int table_id, off_t offset);
 
 
-int replace_page(int table_id);
+int replace_page();
 
 // Flush function
 void flush_page_to_buffer(int table_id, Page* page);

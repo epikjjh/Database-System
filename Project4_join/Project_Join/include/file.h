@@ -12,6 +12,8 @@
 
 #define BPTREE_MAX_NODE             (1024 * 1024) // for queue
 
+#define OUTPUT_ORDER                16
+
 /* Type representing the record
  * to which a given key refers.
  * In a real B+ tree system, the
@@ -31,6 +33,14 @@ typedef struct _InternalRecord {
     uint64_t key;
     off_t offset;
 } InternalRecord;
+
+/* Project Join */
+typedef struct _Result {
+    uint64_t key1;
+    char value1[SIZE_VALUE];
+    uint64_t key2;
+    char value2[SIZE_VALUE];
+} Result;
 
 typedef struct _Page {
     char bytes[PAGE_SIZE];
@@ -107,6 +117,21 @@ typedef struct _NodePage {
     off_t file_offset;
 } NodePage;
 
+/* Project Join */
+#define RESULT_KEY1(n, i)      ((n)->results[(i)].key1)
+#define RESULT_VALUE1(n, i)      ((n)->results[(i)].value1)
+#define RESULT_KEY2(n, i)      ((n)->results[(i)].key2)
+#define RESULT_VALUE2(n, i)      ((n)->results[(i)].value2)
+typedef struct _OutputPage {
+    union {
+        Result results[OUTPUT_ORDER];
+        char space[PAGE_SIZE];
+    };
+    
+    //index
+    off_t file_offset;
+} OutputPage;
+
 // Open a db file. Create a file if not exist.
 int open_table(const char* filename);
 
@@ -151,14 +176,21 @@ Page* check_buffer_for_load(int table_id, off_t offset);
 // For flush function
 int check_buffer_for_flush(int table_id, off_t offset);
 
-
-int replace_page(int table_id);
+int replace_page(FILE *file);
 
 // Flush function
 void flush_page_to_buffer(int table_id, Page* page);
-
 
 /* Project Join */
 int join_table(int table_id_1, int table_id_2, char *pathname);
 
 void table_info(int table_id, uint64_t *num_keys, uint64_t *min_key, uint64_t *max_key);
+
+void write_output_buffer(FILE *file, uint64_t key1, char *value1, uint64_t key2, char *value2);
+
+int load_output_page(Page *page);
+
+void flush_output_page(FILE *file, Page *page);
+
+void sync_buffer(FILE *file);
+
