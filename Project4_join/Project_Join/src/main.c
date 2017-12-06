@@ -30,8 +30,6 @@ int main( int argc, char ** argv ) {
     scanf("%" PRIu64 " %" PRIu64 " %" PRIu64 " %s", &start, &end, &jump, input_value_1);
     input_table(table_1, start, end, jump, input_value_1);
 
-    close_table(table_1);
-
     /* Prepare database : table 2 */
 
     table_2 = open_table("table2.db");
@@ -40,11 +38,7 @@ int main( int argc, char ** argv ) {
     scanf("%" PRIu64 " %" PRIu64 " %" PRIu64 " %s", &start, &end, &jump, input_value_2);
     input_table(table_2, start, end, jump, input_value_2);
 
-    close_table(table_2);
-
-    /* Reopen two table and start join */
-    table_1 = open_table("table1.db");
-    table_2 = open_table("table2.db");
+    //close_table(table_2);
 
     /* Join */
     start_t = clock();
