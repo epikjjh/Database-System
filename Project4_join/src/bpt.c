@@ -1648,7 +1648,7 @@ int join_table(int table_id_1, int table_id_2, char *pathname){
                 comp_num_2 = 0;
             }
 
-            // Terminate comdition
+            // Terminate condition
             if(comp_sib_1 == 0 && comp_num_1 == leaf_1.num_keys){
                 sync_buffer(r_fp);
                 fclose(r_fp);
@@ -1659,40 +1659,42 @@ int join_table(int table_id_1, int table_id_2, char *pathname){
             comp_key_2 = LEAF_KEY(&leaf_2, comp_num_2);
         }
 
-        /* Produce */
-        // Notice that two tables are on unique key condition.
-        write_output_buffer(r_fp, comp_key_1, LEAF_VALUE(&leaf_1, comp_num_1), comp_key_2, LEAF_VALUE(&leaf_2, comp_num_2));
+        if(comp_key_1 == comp_key_2){
+            /* Produce */
+            // Notice that two tables are on unique key condition.
+            write_output_buffer(r_fp, comp_key_1, LEAF_VALUE(&leaf_1, comp_num_1), comp_key_2, LEAF_VALUE(&leaf_2, comp_num_2));
 
-        /* Advance each key */
-        // Update compare number
-        comp_num_1++;
-        comp_num_2++;
+            /* Advance each key */
+            // Update compare number
+            comp_num_1++;
+            comp_num_2++;
 
-        // Case : Change table1's leaf page
-        if((comp_num_1 == leaf_1.num_keys) && (comp_sib_1 != 0)){
-            // Update leaf page
-            load_page_from_buffer(table_id_1, comp_sib_1, (Page*)&leaf_1);
+            // Case : Change table1's leaf page
+            if((comp_num_1 == leaf_1.num_keys) && (comp_sib_1 != 0)){
+                // Update leaf page
+                load_page_from_buffer(table_id_1, comp_sib_1, (Page*)&leaf_1);
 
-            // Update sibling offset
-            comp_sib_1 = leaf_1.sibling;
+                // Update sibling offset
+                comp_sib_1 = leaf_1.sibling;
 
-            // Reinitialize
-            comp_num_1 = 0;
+                // Reinitialize
+                comp_num_1 = 0;
+            }
+
+            // Case : Change table2's leaf page
+            if((comp_num_2 == leaf_2.num_keys) && (comp_sib_2 != 0)){
+                // Update leaf page
+                load_page_from_buffer(table_id_2, comp_sib_2, (Page*)&leaf_2);
+
+                // Update sibling offset
+                comp_sib_2 = leaf_2.sibling;
+
+                // Reinitialize
+                comp_num_2 = 0;
+            }
+
+            // Update compare key : Done in first part of loop
         }
-
-        // Case : Change table2's leaf page
-        if((comp_num_2 == leaf_2.num_keys) && (comp_sib_2 != 0)){
-            // Update leaf page
-            load_page_from_buffer(table_id_2, comp_sib_2, (Page*)&leaf_2);
-
-            // Update sibling offset
-            comp_sib_2 = leaf_2.sibling;
-
-            // Reinitialize
-            comp_num_2 = 0;
-        }
-
-        // Update compare key : Done in first part of loop
     }
     sync_buffer(r_fp);
     fclose(r_fp);
