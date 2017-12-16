@@ -118,6 +118,14 @@ int buf_size = -1;
 int clock_hand = 0;
 int target_buf = 0;
 
+/* Project Recovery : GLOBALS */
+// Log buffer about 8 MB / LogRecord size : 280 Bytes.
+LogRecord log_buf[30000]; 
+
+// Transaction id
+static uint64_t xid = LOG_SIZE;
+static uint64_t lsn = 280;
+
 // FUNCTION PROTOTYPES.
 
 // Output and utility.
@@ -237,19 +245,23 @@ void usage_2( void ) {
 }
 
 // Open a db file. Create a file if not exist.
+// DB file format : DATA[NUM]
 int open_table(const char* filename) {
-    int i;
+    int i, table_id;
+    size_t len;
 
-    // Table capacitance check.
-    for(i = 0; i < 10; i++){
-        if(table_ids[i] == 0){
-            table_ids[i] = 1;
-            break;
-        }
+    len = strlen(filename);
+
+    if((int)len == 5){
+        table_id = filename[4];
+        i = table_id - '0' - 1;
     }
-
-    // Over table. ( MAX : 10 )
-    if(i == 10){
+    else if((int)len == 6){
+        i = 9;
+    }
+    else{
+        // Irregular case.
+        printf("Wrong input!\n");
         return -1;
     }
 
@@ -1853,4 +1865,62 @@ void sync_buffer(FILE *file){
     buf_mgr[index].page_offset = 0;
     buf_mgr[index].is_dirty = 0;
     buf_mgr[index].refbit = 0;
+}
+
+/* Project recovery */
+int begin_transaction(){
+    // Set transaction id.
+    xid++;
+
+    return 0;
+}
+int commit_transaction(){
+
+}
+
+int abort_transaction(){
+
+}
+int update(int table_id, int64_t key, char *value){
+    if(find(table_id, key) == NULL || dbheader[table_id -1].root_offset == 0){
+        // Not found : matching key OR Empty tree case
+        return -1;
+    }
+    else{
+        // Found : matching key
+        LeafPage leaf_node;
+        int fix_point = 0;
+
+        find_leaf(table_id, key, &leaf_node);
+
+	    while(fix_point < leaf_node.num_keys && LEAF_KEY(&leaf_node, fix_point) != key){
+		    fix_point++;
+        }
+
+        memcpy(LEAF_VALUE(&leaf_node, fix_point), value, SIZE_VALUE);
+
+        // flush leaf node to the file page
+        flush_page_to_buffer(table_id, (Page*)&leaf_node);
+
+        return 0;
+    }
+}
+// Create log record & push to the buffer.
+void create_log(int type, int table_id, int pnum, int offset, int length, char *old_image, char *new_image){
+    LogRecord new;
+    //log_buf
+
+    new.lsn = lsn; 
+    new.prev_lsn = lsn - LOG_SIZE;
+    new.xid = xid;
+    new.type = type;
+    new.table_id = table_id;
+    new.pnum = pnum;
+    new.offset = offset;
+    new.length = length;
+    strcpy(new.old_image, old_image);
+    strcpy(new.new_image, new_image);
+
+    // Reinitialize lsn : fixed log record size ( 280 )
+    lsn += LOG_SIZE;
 }

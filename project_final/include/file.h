@@ -13,6 +13,7 @@
 #define BPTREE_MAX_NODE             (1024 * 1024) // for queue
 
 #define OUTPUT_ORDER                16
+#define LOG_SIZE                    280
 
 /* Type representing the record
  * to which a given key refers.
@@ -61,7 +62,8 @@ typedef struct _HeaderPage {
     off_t freelist;
     off_t root_offset;
     uint64_t num_pages;
-    char reserved[PAGE_SIZE - 24];
+    off_t page_lsn;
+    char reserved[PAGE_SIZE - 32];
 
     // in-memory data
     off_t file_offset;
@@ -75,7 +77,9 @@ typedef struct _InternalPage {
             off_t parent;
             int is_leaf;
             int num_keys;
-            char reserved[112 - 16];
+            char reserved_1[8];
+            off_t page_lsn;
+            char reserved_2[112 - 32];
             InternalRecord irecords[BPTREE_INTERNAL_ORDER];
         };
         char space[PAGE_SIZE];
@@ -92,7 +96,9 @@ typedef struct _LeafPage {
             off_t parent;
             int is_leaf;
             int num_keys;
-            char reserved[120 - 16];
+            char reserved_1[8];
+            off_t page_lsn;
+            char reserved_2[120 - 32];
             off_t sibling;
             Record records[BPTREE_LEAF_ORDER-1];
         };
@@ -109,6 +115,8 @@ typedef struct _NodePage {
             off_t parent;
             int is_leaf;
             int num_keys;
+            char reserved_1[8];
+            off_t page_lsn;
         };
         char space[PAGE_SIZE];
     };
@@ -194,3 +202,42 @@ void flush_output_page(FILE *file, Page *page);
 
 void sync_buffer(FILE *file);
 
+/* Project recovery */
+typedef struct _LogRecord{
+    struct{
+        off_t lsn;              // End offset of a current log record.
+        off_t prev_lsn;         // LSN of the previous log record.
+        int xid;                // Indicates the transaction that triggers current log record.
+        int type;               /* The type of current log record.
+                                    BEGIN : 0
+                                    UPDATE : 1
+                                    COMMIT : 2
+                                    ABORT : 3 */
+
+        int table_id;           // Indicates the data file.
+        int pnum;               // Page that contains th modified area.
+        int offset;             // Start offset of the modified area within a page.
+        int length;             // The length of modified area.
+        char old_image[120];    // Old contents of the modified area.
+        char new_image[120];    // New contents of the modified area.
+    };
+}LogRecord;
+
+// Allocate transaction structure and initialize it.
+// Return 0 if success, otherwise return non-zero value.
+int begin_transaction();
+
+// Return 0 if success, otherwise return non-zero value.
+// User can get response once all modification of transaction are flushed to a log file.
+// If user get successful return, that means your database can recover committed transaction after system crash.
+int commit_transaction();
+
+// Return 0 if success, otherwise return non-zero value.
+// All affected modification should be canceled and return to old state.
+int abor_transaction();
+
+// Find the matching key and modify the value, where value size <= 120 Bytes.
+// Retrun 0 if success, otherwise return non-zero value.
+int update(int table_id, int64_t key, char *value);
+
+void create_log(int type, int table_id, int pnum, int offset, int length, char *old_image, char *new_image);
