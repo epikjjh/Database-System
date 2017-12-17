@@ -13,7 +13,7 @@
 #define BPTREE_MAX_NODE             (1024 * 1024) // for queue
 
 #define OUTPUT_ORDER                16
-#define LOG_SIZE                    280
+#define SIZE_LOG                    280
 
 /* Type representing the record
  * to which a given key refers.
@@ -241,3 +241,7 @@ int abor_transaction();
 int update(int table_id, int64_t key, char *value);
 
 void create_log(int type, int table_id, int pnum, int offset, int length, char *old_image, char *new_image);
+
+void flush_log(int size);
+
+void recovery();

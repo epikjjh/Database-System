@@ -23,17 +23,31 @@ int main( int argc, char ** argv ) {
     table_1 = open_table("DATA1");
     table_2 = open_table("DATA2");
 
-    update(table_1, 1, "A");
-    find_and_print(table_1, 1);
-    insert(table_1, 1, "B");
-    find_and_print(table_1, 1);
-    update(table_1, 1, "C");
-    find_and_print(table_1, 1);
+    insert(table_1, 1, "A");
+    insert(table_1, 2, "B");
+    insert(table_2, 1, "C");
+    insert(table_2, 2, "D");
+
+    //find_and_print(table_1, 1);
+    //find_and_print(table_1, 2);
+    //find_and_print(table_2, 1);
+    //find_and_print(table_2, 2);
+
+    begin_transaction();
+    update(table_1, 1, "table1_A");
+    update(table_1, 2, "table1_B");
+    update(table_2, 1, "table2_C");
+    update(table_2, 2, "table2_D");
+    commit_transaction();
+
+    //find_and_print(table_1, 1);
+    //find_and_print(table_1, 2);
+    //find_and_print(table_2, 1);
+    //find_and_print(table_2, 2);
 
     close_table(table_1);
     close_table(table_2);
 
-    /* Remove database file */
     remove("DATA1");
     remove("DATA2");
 

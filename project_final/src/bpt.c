@@ -77,6 +77,8 @@
 // order arbitrarily.  You may change the maximum order.
 #define MIN_ORDER 3
 #define MAX_ORDER 256
+// Log buffer size : About 8MB
+#define SIZE_LOG_BUFFER 3
 
 // Constants for printing part or all of the GPL license.
 #define LICENSE_FILE "LICENSE.txt"
@@ -120,11 +122,13 @@ int target_buf = 0;
 
 /* Project Recovery : GLOBALS */
 // Log buffer about 8 MB / LogRecord size : 280 Bytes.
-LogRecord log_buf[30000]; 
+LogRecord log_buf[SIZE_LOG_BUFFER];
 
 // Transaction id
-static uint64_t xid = LOG_SIZE;
-static uint64_t lsn = 280;
+static uint64_t xid = 0;
+static uint64_t lsn = SIZE_LOG;
+static int log = -1;
+static int log_hand = 0;
 
 // FUNCTION PROTOTYPES.
 
@@ -1309,6 +1313,7 @@ int delete(int table_id, uint64_t key) {
 /* Project Buffer */
 int init_db(int num_buf){
     int i;
+
     // Auto intialize
     buf_mgr = (Buffer *)calloc(num_buf, sizeof(Buffer)); 
 
@@ -1324,6 +1329,22 @@ int init_db(int num_buf){
     /* Success */
     // Memory allocation
     buf_size = num_buf;
+
+    /* Recovery procedure */
+    log = open("log.db", O_RDWR);
+
+    // Case 1 : Log file doesn't exist. Keep going
+
+    // Case 2 : Log file exists. Do recovery.
+    if(log > 0){
+        // Do Recovery -> Later(DEMO)
+        recovery();
+
+        // Remove log file. & Reinitialize
+        close(log);
+        remove("log.db");
+        log = -1;
+    }
 
     return 0;
 }
@@ -1869,19 +1890,42 @@ void sync_buffer(FILE *file){
 
 /* Project recovery */
 int begin_transaction(){
+    // Open Log file
+    // Case 1 : Log file doesn't exist -> Create one
+    if (log < 0) {
+        // Create a new log file
+        log = open("log.db", O_CREAT|O_RDWR, S_IRUSR|S_IWUSR);
+        if (log < 0) {
+            assert("failed to create new log file");
+            return -1;
+        }
+    }
+    // Case 2 : Log file exists -> Keep going ( Use one before made )
+
     // Set transaction id.
     xid++;
+    
+    // Create log : type 0 ( BEGIN )
+    create_log(0, 0, 0, 0, 0, NULL, NULL);
 
     return 0;
 }
 int commit_transaction(){
+    // Create log : type 2 ( COMMIT )
+    create_log(2, 0, 0, 0, 0, NULL, NULL);
+    flush_log(log_hand);
+    fsync(log);
+    log_hand = 0;
 
+    return 0;
 }
-
 int abort_transaction(){
 
+    return 0;
 }
 int update(int table_id, int64_t key, char *value){
+    char old[120];
+
     if(find(table_id, key) == NULL || dbheader[table_id -1].root_offset == 0){
         // Not found : matching key OR Empty tree case
         return -1;
@@ -1896,31 +1940,82 @@ int update(int table_id, int64_t key, char *value){
 	    while(fix_point < leaf_node.num_keys && LEAF_KEY(&leaf_node, fix_point) != key){
 		    fix_point++;
         }
+        // Copy old image for logging
+        strcpy(old, LEAF_VALUE(&leaf_node, fix_point));
 
         memcpy(LEAF_VALUE(&leaf_node, fix_point), value, SIZE_VALUE);
 
-        // flush leaf node to the file page
+        // Create log & push it into the buffer.
+        // TYPE : 1 ( UPDATE )
+        // NEED TO FIX!!!!!!!!!!!!!!!!!!!!!!!!!
+        create_log(1, table_id, leaf_node.file_offset / PAGE_SIZE, leaf_node.file_offset % PAGE_SIZE, strlen(value), old,value);
+
+        // Flush leaf node to the file page
         flush_page_to_buffer(table_id, (Page*)&leaf_node);
 
         return 0;
     }
 }
-// Create log record & push to the buffer.
+// Create log record & push it into the buffer.
 void create_log(int type, int table_id, int pnum, int offset, int length, char *old_image, char *new_image){
-    LogRecord new;
-    //log_buf
+    LogRecord new_log;
 
-    new.lsn = lsn; 
-    new.prev_lsn = lsn - LOG_SIZE;
-    new.xid = xid;
-    new.type = type;
-    new.table_id = table_id;
-    new.pnum = pnum;
-    new.offset = offset;
-    new.length = length;
-    strcpy(new.old_image, old_image);
-    strcpy(new.new_image, new_image);
+    /* Create LOG */
+    new_log.lsn = lsn; 
+    new_log.prev_lsn = lsn - SIZE_LOG;
+    new_log.xid = xid;
+    new_log.type = type;
+    new_log.table_id = table_id;
+    new_log.pnum = pnum;
+    new_log.offset = offset;
+    new_log.length = length;
+    if(old_image != NULL & new_image != NULL){
+        strcpy(new_log.old_image, old_image);
+        strcpy(new_log.new_image, new_image);
+    }
 
     // Reinitialize lsn : fixed log record size ( 280 )
-    lsn += LOG_SIZE;
+    lsn += SIZE_LOG;
+
+    /* Push log into buffer */
+    // If lgo buffer is full, flush some log records to log file.
+    if(log_hand == SIZE_LOG_BUFFER){
+        // Current program flush 10000 records.
+        flush_log(SIZE_LOG_BUFFER / 3);
+        fsync(log);
+    }
+    log_buf[log_hand++] = new_log;
+}
+// Flush log record ( in buffer ) into log file & Reorder buffer & Modify log_hand
+void flush_log(int size){
+    int i = 0;
+
+    // Flush
+    for(i = 0; i < size; i++){
+        lseek(log, log_buf[i].prev_lsn, SEEK_SET);
+        write(log, log_buf + i, SIZE_LOG);
+    }
+
+    // Reorder buffer
+    for(i = size; i < SIZE_LOG_BUFFER; i++){
+        log_buf[i-size] = log_buf[i];
+    }
+
+    // Modify log_hand
+    log_hand -= size; 
+}
+void recovery(){
+    LogRecord redo;
+    off_t file_size, offset = 0;
+    int i;
+
+    // Determine the file size
+    file_size = lseek(log, 0, SEEK_END);
+
+    for(i = 0; i < file_size / SIZE_LOG; i++){
+        lseek(log, offset, SEEK_SET);
+        read(log, &redo, SIZE_LOG);
+        printf("%d %d %d %d %d %d %d %d %s %s\n", (int)redo.lsn, (int)redo.prev_lsn, redo.xid, redo.type, redo.table_id, redo.pnum, redo.offset, redo.length, redo.old_image, redo.new_image);
+        offset += SIZE_LOG;
+    }
 }
