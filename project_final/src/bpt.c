@@ -92,7 +92,6 @@
 // GLOBALS.
 extern HeaderPage dbheader[10];
 extern int dbfile[10];
-static int table_ids[10] = {0,};
 
 /* The order determines the maximum and minimum
  * number of entries (keys and pointers) in any
@@ -1386,12 +1385,12 @@ int close_table(int table_id){
             buf_mgr[i].refbit = 0;
         }
     }
-
-    // Discard the table id.
-    table_ids[table_id -1] = 0;
     
     // Close file
     close_db(table_id);
+
+    // Reinitialize dbfile
+    dbfile[table_id - 1] = 0;
 
     return 0;
 }
@@ -1528,9 +1527,18 @@ int replace_page(FILE *file){
             // Regular buffer
             // Check dirty bit.
             if(buf_mgr[clock_hand].is_dirty == 1){
+                int page_lsn;
                 // Before flush page, excute WAL protocol
-                /* Current program only treats update for recovery which means treating modification ofLeaf page */
-                execute_wal();
+                /* Current program only treats update for recovery which means treating modification of Leaf page */
+
+                /* Exclude HeaderPage & InternalPage*/
+                if(exclude_header()){
+                    page_lsn = exclude_internal();
+                    // Only for update query
+                    if(page_lsn > 0){
+                        execute_wal(page_lsn);
+                    }
+                }
 
                 /* Flush page. */
                 flush_page(buf_mgr[clock_hand].table_id, buf_mgr[clock_hand].frame);
@@ -2041,4 +2049,52 @@ void recovery(){
         printf("%d %d %d %d %d %d %d %d %s %s\n", (int)redo.lsn, (int)redo.prev_lsn, redo.xid, redo.type, redo.table_id, redo.pnum, redo.offset, redo.length, redo.old_image, redo.new_image);
         offset += SIZE_LOG;
     }
+}
+// Execute WAL protocol
+void execute_wal(int page_lsn){
+    int i,size = 0;
+
+    for(i = 0; i < SIZE_LOG_BUFFER; i++){
+        if(log_buf[i].lsn <= page_lsn){
+            size++;
+        }
+        else
+            break;
+    }
+
+    flush_log(size);
+}
+// If evicted page is not HeaderPage, return 1.
+int exclude_header(){
+    int i, size = 0;
+    off_t target;
+
+    target = buf_mgr[clock_hand].page_offset;
+
+    // Check number of open file.
+    for(i = 0; i < 10; i++){
+        if(dbfile[i] > 0){
+            size++;
+        }
+    }
+
+    // Check if evicted page is HeaderPage or not.
+    for(i = 0; i < size; i++){
+        if(dbheader[i].file_offset == target){
+            return 0;
+        }
+    }
+    return 1;
+}
+// If evicted page is LeafPage, return page_lsn.
+int exclude_internal(){
+    NodePage test;
+
+    memcpy(&test, buf_mgr[clock_hand].frame, sizeof(Page));
+    
+    if(test.is_leaf == 1){
+        return test.page_lsn;
+    }
+    else
+        return 0;
 }

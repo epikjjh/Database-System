@@ -7,7 +7,7 @@
 #include <string.h>
 #include "file.h"
 
-HeaderPage dbheader[10];
+HeaderPage dbheader[10] = {0,};
 int dbfile[10] = {0,};
 
 // Get free page to use.

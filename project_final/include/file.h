@@ -246,4 +246,8 @@ void flush_log(int size);
 
 void recovery();
 
-void execute_wal();
+void execute_wal(int page_lsn);
+
+int exclude_header();
+
+int exclude_internal();
