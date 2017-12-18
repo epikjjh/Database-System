@@ -245,3 +245,5 @@ void create_log(int type, int table_id, int pnum, int offset, int length, char *
 void flush_log(int size);
 
 void recovery();
+
+void execute_wal();

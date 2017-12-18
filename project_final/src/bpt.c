@@ -283,6 +283,7 @@ int open_table(const char* filename) {
         dbheader[i].root_offset = 0;
         dbheader[i].num_pages = 1;
         dbheader[i].file_offset = 0;
+        dbheader[i].page_lsn = -1;
         flush_page_to_buffer(i+1, (Page*)(dbheader + i));
     } else {
         // DB file exist. Load header info
@@ -554,6 +555,9 @@ void insert_into_leaf_after_splitting(int table_id, LeafPage* leaf, uint64_t key
     // allocate a page for new leaf
     new_leaf.file_offset = get_free_page(table_id);
 
+    /* Set default page lsn. */
+    new_leaf.page_lsn = -1;
+
     // linked-list of leaves
 	new_leaf.sibling = leaf->sibling;
 	leaf->sibling = new_leaf.file_offset;
@@ -647,6 +651,9 @@ void insert_into_node_after_splitting(int table_id, InternalPage* old_node, int 
 	new_node.num_keys = 0;
     new_node.is_leaf = 0;
     new_node.file_offset = get_free_page(table_id);
+
+    /* Set default page lsn */
+    new_node.page_lsn = -1;
 
     old_node->num_keys = 0;
 	for (i = 0; i < split - 1; i++) {
@@ -744,6 +751,10 @@ void insert_into_new_root(int table_id, NodePage* left, uint64_t key, NodePage* 
     InternalPage root_node;
     memset(&root_node, 0, sizeof(InternalPage));
     root_node.file_offset = get_free_page(table_id);
+
+    /* Set default page lsn */
+    root_node.page_lsn = -1;
+
     INTERNAL_KEY(&root_node, 0) = key;
     INTERNAL_OFFSET(&root_node, 0) = left->file_offset;
     INTERNAL_OFFSET(&root_node, 1) = right->file_offset;
@@ -774,6 +785,10 @@ void start_new_tree(int table_id, uint64_t key, const char* value) {
     root_node.num_keys = 1;
     LEAF_KEY(&root_node, 0) = key;
     root_node.sibling = 0;
+
+    /* Set default page lsn */
+    root_node.page_lsn = -1;
+
     memcpy(LEAF_VALUE(&root_node, 0), value, SIZE_VALUE);
     
     flush_page_to_buffer(table_id, (Page*)&root_node);
@@ -1497,7 +1512,7 @@ int replace_page(FILE *file){
             // Setting target_index
             target_index = clock_hand;
 
-            // Output buffer
+            // Output buffer : JOIN
             if(buf_mgr[clock_hand].table_id == -1){
                 int i;
                 OutputPage *target;
@@ -1513,9 +1528,14 @@ int replace_page(FILE *file){
             // Regular buffer
             // Check dirty bit.
             if(buf_mgr[clock_hand].is_dirty == 1){
+                // Before flush page, excute WAL protocol
+                /* Current program only treats update for recovery which means treating modification ofLeaf page */
+                execute_wal();
+
                 /* Flush page. */
                 flush_page(buf_mgr[clock_hand].table_id, buf_mgr[clock_hand].frame);
             }
+
             // Reinitialize : Evict
             memset(buf_mgr[clock_hand].frame, 0, sizeof(Page));
             buf_mgr[clock_hand].table_id = 0;
@@ -1933,7 +1953,7 @@ int update(int table_id, int64_t key, char *value){
     else{
         // Found : matching key
         LeafPage leaf_node;
-        int fix_point = 0;
+        int fix_point = 0, location;
 
         find_leaf(table_id, key, &leaf_node);
 
@@ -1945,10 +1965,13 @@ int update(int table_id, int64_t key, char *value){
 
         memcpy(LEAF_VALUE(&leaf_node, fix_point), value, SIZE_VALUE);
 
+        /* Set page's lsn */
+        leaf_node.page_lsn = lsn;
+
         // Create log & push it into the buffer.
         // TYPE : 1 ( UPDATE )
-        // NEED TO FIX!!!!!!!!!!!!!!!!!!!!!!!!!
-        create_log(1, table_id, leaf_node.file_offset / PAGE_SIZE, leaf_node.file_offset % PAGE_SIZE, strlen(value), old,value);
+        location = leaf_node.file_offset + 128 + (fix_point * 128) + 8;
+        create_log(1, table_id, location / PAGE_SIZE, location % PAGE_SIZE, strlen(value), old,value);
 
         // Flush leaf node to the file page
         flush_page_to_buffer(table_id, (Page*)&leaf_node);

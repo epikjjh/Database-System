@@ -18,7 +18,7 @@ int main( int argc, char ** argv ) {
 
     printf("Welcome to recovery test\n");
 
-    init_db(5);
+    init_db(100);
     
     table_1 = open_table("DATA1");
     table_2 = open_table("DATA2");
