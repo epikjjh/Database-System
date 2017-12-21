@@ -1947,6 +1947,59 @@ int commit_transaction(){
     return 0;
 }
 int abort_transaction(){
+    off_t file_size, start = -1, end = -1, offset = 0;
+    int fix_point;
+    LogRecord undo;
+    LeafPage target;
+
+    // Create log : type 3 ( ABORT )
+    create_log(3, 0, 0, 0, 0, NULL, NULL);
+
+    // First, flush all log records.
+    flush_log(log_hand);
+    fsync(log);
+    log_hand = 0;
+
+    /* Log file is already open. */
+
+    // Determine the file size
+    file_size = lseek(log, 0, SEEK_END);
+
+    /* Abort transaction */
+    // Define range
+    for(offset = file_size - SIZE_LOG; offset >= 0; offset -= SIZE_LOG){
+        // Read log from log file.
+        lseek(log, offset, SEEK_SET);
+        read(log, &undo, SIZE_LOG);
+
+        if(undo.type == 3){
+            end = undo.prev_lsn;
+        }
+        if(end != -1 && undo.type == 0){
+            start = undo.prev_lsn;
+            break;
+        }
+    }
+
+    // Start rollback
+    for(offset = end - SIZE_LOG; offset > start; offset -= SIZE_LOG){
+        // Read log from log file.
+        lseek(log, offset, SEEK_SET);
+        read(log, &undo, SIZE_LOG);
+
+        // Load page which is to be undone.
+        load_page_from_buffer(undo.table_id, undo.pnum * PAGE_SIZE, (Page*)&target);
+        fix_point = (undo.offset - 128 - 8) / 128;
+        
+        // Undo
+        strcpy(LEAF_VALUE(&target,fix_point), undo.old_image);
+
+        // Change page lsn
+        target.page_lsn = undo.prev_lsn;
+
+        // Flush
+        flush_page_to_buffer(undo.table_id, (Page*)&target);
+    }
 
     return 0;
 }
@@ -2113,7 +2166,7 @@ void recovery(){
             lseek(log, offset, SEEK_SET);
             read(log, &undo, SIZE_LOG);
 
-            // Load page which is to be redone.
+            // Load page which is to be undone.
             load_page_from_buffer(undo.table_id, undo.pnum * PAGE_SIZE, (Page*)&target);
             fix_point = (undo.offset - 128 - 8) / 128;
 
@@ -2123,7 +2176,7 @@ void recovery(){
                 strcpy(LEAF_VALUE(&target,fix_point), undo.old_image);
 
                 // Change page lsn
-                target.page_lsn = undo.lsn;
+                target.page_lsn = undo.prev_lsn;
 
                 // Flush
                 flush_page_to_buffer(undo.table_id, (Page*)&target);

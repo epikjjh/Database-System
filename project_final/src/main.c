@@ -18,7 +18,7 @@ int main( int argc, char ** argv ) {
 
     printf("Welcome to recovery test\n");
 
-    init_db(100);
+    init_db(1);
     
     /* Populate DB */
 
@@ -46,7 +46,24 @@ int main( int argc, char ** argv ) {
     update(table_1, 2, "table1_B");
     update(table_2, 1, "table2_C");
     update(table_2, 2, "table2_D");
-    //commit_transaction();
+    abort_transaction();
+
+    find_and_print(table_1, 1);
+    find_and_print(table_1, 2);
+    find_and_print(table_2, 1);
+    find_and_print(table_2, 2);
+
+    begin_transaction();
+    update(table_1, 1, "table1_AA");
+    update(table_1, 2, "table1_BB");
+    update(table_2, 1, "table2_CC");
+    update(table_2, 2, "table2_DD");
+    commit_transaction();
+
+    find_and_print(table_1, 1);
+    find_and_print(table_1, 2);
+    find_and_print(table_2, 1);
+    find_and_print(table_2, 2);
 
     //find_and_print(table_1, 1);
     //find_and_print(table_1, 2);
