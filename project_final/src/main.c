@@ -52,19 +52,13 @@ int main( int argc, char ** argv ) {
     find_and_print(table_1, 2);
     find_and_print(table_2, 1);
     find_and_print(table_2, 2);
-
+/*
     begin_transaction();
     update(table_1, 1, "table1_AA");
     update(table_1, 2, "table1_BB");
     update(table_2, 1, "table2_CC");
     update(table_2, 2, "table2_DD");
-    commit_transaction();
-
-    find_and_print(table_1, 1);
-    find_and_print(table_1, 2);
-    find_and_print(table_2, 1);
-    find_and_print(table_2, 2);
-
+*/
     //find_and_print(table_1, 1);
     //find_and_print(table_1, 2);
     //find_and_print(table_2, 1);

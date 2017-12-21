@@ -1997,9 +1997,17 @@ int abort_transaction(){
         // Change page lsn
         target.page_lsn = undo.prev_lsn;
 
+        // Create compensation log
+        create_log(1, undo.table_id, undo.pnum, undo.offset, undo.length, undo.new_image, undo.old_image);
+
         // Flush
         flush_page_to_buffer(undo.table_id, (Page*)&target);
     }
+
+    // Flush all log records.
+    flush_log(log_hand);
+    fsync(log);
+    log_hand = 0;
 
     return 0;
 }
@@ -2118,7 +2126,7 @@ void recovery(){
         if(redo.type == 0){
             begin = redo.prev_lsn;
         }
-        if(redo.type == 2){
+        if(redo.type == 2 || 3){
             end = redo.prev_lsn;
         }
 
