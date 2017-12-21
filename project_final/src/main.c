@@ -35,7 +35,6 @@ int main( int argc, char ** argv ) {
 
     table_1 = open_table("DATA1");
     table_2 = open_table("DATA2");
-
     
     find_and_print(table_1, 1);
     find_and_print(table_1, 2);
@@ -47,7 +46,7 @@ int main( int argc, char ** argv ) {
     update(table_1, 2, "table1_B");
     update(table_2, 1, "table2_C");
     update(table_2, 2, "table2_D");
-    commit_transaction();
+    //commit_transaction();
 
     //find_and_print(table_1, 1);
     //find_and_print(table_1, 2);

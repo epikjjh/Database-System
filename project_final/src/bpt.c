@@ -1351,7 +1351,6 @@ int init_db(int num_buf){
 
     // Case 2 : Log file exists. Do recovery.
     if(log > 0){
-        // Do Recovery -> Later(DEMO)
         recovery();
 
         // Remove log file. & Reinitialize
@@ -1963,6 +1962,17 @@ int update(int table_id, int64_t key, char *value){
         LeafPage leaf_node;
         int fix_point = 0, location;
 
+        // If log file doesn't exist, create.
+        log = open("log.db", O_RDWR);
+        if (log < 0) {
+            // Create a new log file
+            log = open("log.db", O_CREAT|O_RDWR, S_IRUSR|S_IWUSR);
+            if (log < 0) {
+                assert("failed to create new db file");
+                return -1;
+            }
+        }
+
         find_leaf(table_id, key, &leaf_node);
 
 	    while(fix_point < leaf_node.num_keys && LEAF_KEY(&leaf_node, fix_point) != key){
@@ -2037,7 +2047,7 @@ void flush_log(int size){
 }
 void recovery(){
     LogRecord redo;
-    off_t file_size = 0, offset = 0;
+    off_t file_size = 0, offset = 0, begin = -1, end = -1;
     int i, fix_point = 0;
     char file[10] = "DATA";
     LeafPage target;
@@ -2045,18 +2055,19 @@ void recovery(){
     // Determine the file size
     file_size = lseek(log, 0, SEEK_END);
 
-    // Empty log file
-    if(file_size == 0){
-        remove("log.db");
-        return;
-    }
-
     /* Redo History & Analysis */
     for(i = 0; i < file_size / SIZE_LOG; i++){
         // Read log from log file.
         lseek(log, offset, SEEK_SET);
         read(log, &redo, SIZE_LOG);
 
+        /* Loser check */
+        if(redo.type == 0){
+            begin = redo.prev_lsn;
+        }
+        if(redo.type == 2){
+            end = redo.prev_lsn;
+        }
 
         // Open table if it is not
         if(redo.type == 1){
@@ -2072,24 +2083,53 @@ void recovery(){
                 }
                 open_table(file);
             }
-        }
 
-        // Load page which is to be redone.
-        load_page_from_buffer(redo.table_id, redo.pnum * PAGE_SIZE, (Page*)&target);
+            // Load page which is to be redone.
+            load_page_from_buffer(redo.table_id, redo.pnum * PAGE_SIZE, (Page*)&target);
         
-        fix_point = (redo.offset - 128 - 8) / 128;
+            fix_point = (redo.offset - 128 - 8) / 128;
 
-        // Compare page_lsn with log lsn then redo
-        if(target.page_lsn < redo.lsn){
-            // Redo
-            strcpy(LEAF_VALUE(&target,fix_point),redo.new_image);
+            // Compare page_lsn with log lsn then redo
+            if(target.page_lsn <= redo.lsn){
+                // Redo
+                strcpy(LEAF_VALUE(&target,fix_point),redo.new_image);
 
-            // Flush
-            flush_page_to_buffer(redo.table_id, (Page*)&target);
+                // Change page lsn
+                target.page_lsn = redo.lsn;
+
+                // Flush
+                flush_page_to_buffer(redo.table_id, (Page*)&target);
+            }
         }
         offset += SIZE_LOG;
     }
 
+    /* Undo loser */
+    if(begin > end){
+        for(offset = file_size - SIZE_LOG; offset > begin; offset -= SIZE_LOG){
+            LogRecord undo;
+
+            // Read log from log file.
+            lseek(log, offset, SEEK_SET);
+            read(log, &undo, SIZE_LOG);
+
+            // Load page which is to be redone.
+            load_page_from_buffer(undo.table_id, undo.pnum * PAGE_SIZE, (Page*)&target);
+            fix_point = (undo.offset - 128 - 8) / 128;
+
+            // Compare page_lsn with log lsn then undo
+            if(target.page_lsn >= undo.lsn){
+                // Undo
+                strcpy(LEAF_VALUE(&target,fix_point), undo.old_image);
+
+                // Change page lsn
+                target.page_lsn = undo.lsn;
+
+                // Flush
+                flush_page_to_buffer(undo.table_id, (Page*)&target);
+            }
+        }
+    }
 
     // Flush result in buffer
     for(i = 0; i < buf_size; i++){
@@ -2102,7 +2142,7 @@ void recovery(){
 void execute_wal(int page_lsn){
     int i,size = 0;
 
-    for(i = 0; i < SIZE_LOG_BUFFER; i++){
+    for(i = 0; i < log_hand; i++){
         if(log_buf[i].lsn <= page_lsn){
             size++;
         }
