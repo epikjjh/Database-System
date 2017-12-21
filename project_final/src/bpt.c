@@ -2126,7 +2126,7 @@ void recovery(){
         if(redo.type == 0){
             begin = redo.prev_lsn;
         }
-        if(redo.type == 2 || 3){
+        if(redo.type == 2 || redo.type == 3){
             end = redo.prev_lsn;
         }
 
