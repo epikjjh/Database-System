@@ -18,8 +18,10 @@ int main( int argc, char ** argv ) {
 
     printf("Welcome to recovery test\n");
 
-    init_db(1);
+    init_db(100);
     
+    /* Populate DB */
+
     table_1 = open_table("DATA1");
     table_2 = open_table("DATA2");
 
@@ -28,10 +30,17 @@ int main( int argc, char ** argv ) {
     insert(table_2, 1, "C");
     insert(table_2, 2, "D");
 
-    //find_and_print(table_1, 1);
-    //find_and_print(table_1, 2);
-    //find_and_print(table_2, 1);
-    //find_and_print(table_2, 2);
+    close_table(table_1);
+    close_table(table_2);
+
+    table_1 = open_table("DATA1");
+    table_2 = open_table("DATA2");
+
+    
+    find_and_print(table_1, 1);
+    find_and_print(table_1, 2);
+    find_and_print(table_2, 1);
+    find_and_print(table_2, 2);
 
     begin_transaction();
     update(table_1, 1, "table1_A");
@@ -45,11 +54,8 @@ int main( int argc, char ** argv ) {
     //find_and_print(table_2, 1);
     //find_and_print(table_2, 2);
 
-    close_table(table_1);
-    close_table(table_2);
-
-    remove("DATA1");
-    remove("DATA2");
+    //close_table(table_1);
+    //close_table(table_2);
 
 	return EXIT_SUCCESS;
 }

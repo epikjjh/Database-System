@@ -78,7 +78,7 @@
 #define MIN_ORDER 3
 #define MAX_ORDER 256
 // Log buffer size : About 8MB
-#define SIZE_LOG_BUFFER 3
+#define SIZE_LOG_BUFFER 30000
 
 // Constants for printing part or all of the GPL license.
 #define LICENSE_FILE "LICENSE.txt"
@@ -1954,7 +1954,7 @@ int abort_transaction(){
 int update(int table_id, int64_t key, char *value){
     char old[120];
 
-    if(find(table_id, key) == NULL || dbheader[table_id -1].root_offset == 0){
+    if(dbfile[table_id -1] == 0 || dbheader[table_id - 1].root_offset == 0 || find(table_id, key) == NULL){
         // Not found : matching key OR Empty tree case
         return -1;
     }
@@ -2037,17 +2037,65 @@ void flush_log(int size){
 }
 void recovery(){
     LogRecord redo;
-    off_t file_size, offset = 0;
-    int i;
+    off_t file_size = 0, offset = 0;
+    int i, fix_point = 0;
+    char file[10] = "DATA";
+    LeafPage target;
 
     // Determine the file size
     file_size = lseek(log, 0, SEEK_END);
 
+    // Empty log file
+    if(file_size == 0){
+        remove("log.db");
+        return;
+    }
+
+    /* Redo History & Analysis */
     for(i = 0; i < file_size / SIZE_LOG; i++){
+        // Read log from log file.
         lseek(log, offset, SEEK_SET);
         read(log, &redo, SIZE_LOG);
-        printf("%d %d %d %d %d %d %d %d %s %s\n", (int)redo.lsn, (int)redo.prev_lsn, redo.xid, redo.type, redo.table_id, redo.pnum, redo.offset, redo.length, redo.old_image, redo.new_image);
+
+
+        // Open table if it is not
+        if(redo.type == 1){
+            if(dbfile[redo.table_id - 1] == 0){
+                if(redo.table_id == 10){
+                    file[4] = '1';
+                    file[5] = '0';
+                    file[6] = '\0';
+                }
+                else{
+                    file[4] = redo.table_id + '0';
+                    file[5] = '\0';
+                }
+                open_table(file);
+            }
+        }
+
+        // Load page which is to be redone.
+        load_page_from_buffer(redo.table_id, redo.pnum * PAGE_SIZE, (Page*)&target);
+        
+        fix_point = (redo.offset - 128 - 8) / 128;
+
+        // Compare page_lsn with log lsn then redo
+        if(target.page_lsn < redo.lsn){
+            // Redo
+            strcpy(LEAF_VALUE(&target,fix_point),redo.new_image);
+
+            // Flush
+            flush_page_to_buffer(redo.table_id, (Page*)&target);
+        }
         offset += SIZE_LOG;
+    }
+
+
+    // Flush result in buffer
+    for(i = 0; i < buf_size; i++){
+        if(buf_mgr[i].is_dirty == 1){
+            flush_page(buf_mgr[i].table_id, buf_mgr[i].frame);
+        }
     }
 }
 // Execute WAL protocol
