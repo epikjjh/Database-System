@@ -1952,15 +1952,12 @@ int abort_transaction(){
     LogRecord undo;
     LeafPage target;
 
-    // Create log : type 3 ( ABORT )
-    create_log(3, 0, 0, 0, 0, NULL, NULL);
+    /* Log file is already open. */
 
     // First, flush all log records.
     flush_log(log_hand);
     fsync(log);
     log_hand = 0;
-
-    /* Log file is already open. */
 
     // Determine the file size
     file_size = lseek(log, 0, SEEK_END);
@@ -1972,17 +1969,14 @@ int abort_transaction(){
         lseek(log, offset, SEEK_SET);
         read(log, &undo, SIZE_LOG);
 
-        if(undo.type == 3){
-            end = undo.prev_lsn;
-        }
-        if(end != -1 && undo.type == 0){
+        if(undo.type == 0){
             start = undo.prev_lsn;
             break;
         }
     }
 
     // Start rollback
-    for(offset = end - SIZE_LOG; offset > start; offset -= SIZE_LOG){
+    for(offset = file_size - SIZE_LOG; offset > start; offset -= SIZE_LOG){
         // Read log from log file.
         lseek(log, offset, SEEK_SET);
         read(log, &undo, SIZE_LOG);
@@ -2003,6 +1997,9 @@ int abort_transaction(){
         // Flush
         flush_page_to_buffer(undo.table_id, (Page*)&target);
     }
+
+    // Create log : type 3 ( ABORT )
+    create_log(3, 0, 0, 0, 0, NULL, NULL);
 
     // Flush all log records.
     flush_log(log_hand);
